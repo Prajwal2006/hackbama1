@@ -36,7 +36,7 @@ export function CreatePostForm({ campus, kind, spots }: { campus: string; kind: 
     luggage: "",
     dish: "",
     dietary: "",
-    pickupSpot: spots[0] ?? "",
+    pickupSpot: kind === "meal" ? "" : (spots[0] ?? ""),
     trade: "",
   }));
   const set = (k: string, v: string | boolean) => setF((s) => ({ ...s, [k]: v }));
@@ -142,7 +142,7 @@ export function CreatePostForm({ campus, kind, spots }: { campus: string; kind: 
               </div>
               <div>
                 <Label htmlFor="p-spot">Pickup spot</Label>
-                <Input id="p-spot" list="spots" value={String(f.pickupSpot)} onChange={(e) => set("pickupSpot", e.target.value)} />
+                <Input id="p-spot" required value={String(f.pickupSpot)} onChange={(e) => set("pickupSpot", e.target.value)} placeholder="Your apartment complex or street" />
               </div>
               <div>
                 <Label htmlFor="p-diet">Dietary tags</Label>
