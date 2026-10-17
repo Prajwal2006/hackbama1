@@ -62,7 +62,14 @@ export function ArScanner({
 
   const generate = () =>
     start(async () => {
-      const r = await analyzeArPhotosAction(campus, images);
+      let r: Awaited<ReturnType<typeof analyzeArPhotosAction>>;
+      try {
+        r = await analyzeArPhotosAction(campus, images);
+      } catch {
+        // Network drop, server timeout or a crash: keep the form usable instead of hitting the error page.
+        toast.error("Couldn't make the 3D model", { description: "The scan didn't finish. Check your connection and try again." });
+        return;
+      }
       if (!r.ok) {
         toast.error("Couldn't make the 3D model", { description: r.message });
         return;

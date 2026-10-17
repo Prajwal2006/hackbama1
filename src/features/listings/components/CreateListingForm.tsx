@@ -131,34 +131,40 @@ export function CreateListingForm({
   const onSubmit = handleSubmit((d) => {
     const cents = (s: string) => parseDollarsToCents(s);
     start(async () => {
-      const r = await createListingAction(campus, {
-        title: d.title,
-        description: d.description,
-        category: d.category,
-        condition: d.condition,
-        saleMode: d.saleMode,
-        priceCents: d.saleMode === "fixed" ? (cents(d.price) ?? 0) : 0,
-        auction:
-          d.saleMode === "auction"
-            ? {
-                startingBidCents: cents(d.startingBid)!,
-                minimumIncrementCents: cents(d.increment)!,
-                auctionStartsAt: new Date().toISOString() as unknown as Date,
-                auctionEndsAt: new Date(d.endsAt).toISOString() as unknown as Date,
-                reservePriceCents: cents(d.reserve),
-                buyNowPriceCents: cents(d.buyNow),
-              }
-            : null,
-        imageUrls: images,
-        arModel,
-        pickupMode: d.pickupMode,
-        handoffStart: d.handoffStart ? (new Date(d.handoffStart).toISOString() as unknown as Date) : null,
-        handoffEnd: d.handoffEnd ? (new Date(d.handoffEnd).toISOString() as unknown as Date) : null,
-        pickupSpotId: d.pickupSpotId || null,
-        locationHint: d.locationHint.trim() || null,
-        holdForMoveIn: d.holdForMoveIn,
-        artSeed: seed,
-      });
+      let r: Awaited<ReturnType<typeof createListingAction>>;
+      try {
+        r = await createListingAction(campus, {
+          title: d.title,
+          description: d.description,
+          category: d.category,
+          condition: d.condition,
+          saleMode: d.saleMode,
+          priceCents: d.saleMode === "fixed" ? (cents(d.price) ?? 0) : 0,
+          auction:
+            d.saleMode === "auction"
+              ? {
+                  startingBidCents: cents(d.startingBid)!,
+                  minimumIncrementCents: cents(d.increment)!,
+                  auctionStartsAt: new Date().toISOString() as unknown as Date,
+                  auctionEndsAt: new Date(d.endsAt).toISOString() as unknown as Date,
+                  reservePriceCents: cents(d.reserve),
+                  buyNowPriceCents: cents(d.buyNow),
+                }
+              : null,
+          imageUrls: images,
+          arModel,
+          pickupMode: d.pickupMode,
+          handoffStart: d.handoffStart ? (new Date(d.handoffStart).toISOString() as unknown as Date) : null,
+          handoffEnd: d.handoffEnd ? (new Date(d.handoffEnd).toISOString() as unknown as Date) : null,
+          pickupSpotId: d.pickupSpotId || null,
+          locationHint: d.locationHint.trim() || null,
+          holdForMoveIn: d.holdForMoveIn,
+          artSeed: seed,
+        });
+      } catch {
+        toast.error("Couldn't post that", { description: "The connection dropped before we heard back. Check My Dibs before trying again." });
+        return;
+      }
       if (!r.ok) {
         toast.error("Couldn't post that", { description: r.message });
         return;
