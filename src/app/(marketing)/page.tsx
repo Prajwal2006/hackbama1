@@ -60,7 +60,7 @@ export default async function Landing() {
             </p>
           </Reveal>
           <Reveal>
-            <h1 className="mt-6 font-display text-fluid-hero font-extrabold tracking-[-0.055em]">
+            <h1 className="mt-6 font-display text-fluid-hero font-extrabold tracking-[-0.055em]" data-tour="hero">
               See it.
               <br />
               Want it.
@@ -82,8 +82,8 @@ export default async function Landing() {
                 Enter UA <ArrowRight />
               </Link>
             </Magnet>
-            <Link href="/demo" className={buttonVariants({ size: "lg", variant: "outline" })}>
-              Try the demo campus
+            <Link href="/demo" className={buttonVariants({ size: "lg", variant: "outline" })} data-testid="landing-demo">
+              ▶ 5-minute guided demo
             </Link>
           </Reveal>
           <Reveal className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-3">
@@ -164,6 +164,34 @@ export default async function Landing() {
         </div>
       </section>
 
+      {/* ——— Beyond buying ——— */}
+      <section className="mx-auto max-w-[1440px] px-safe py-20 md:px-10">
+        <p className="font-mono text-xs tracking-[0.2em] text-ink-3 uppercase">Same verified students, more ways to help each other</p>
+        <h2 className="mt-3 max-w-3xl font-display text-fluid-xl font-extrabold">More than a marketplace.</h2>
+        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { href: "/ua/x/handoffs", t: "Move-out → move-in", b: "Hand off before you leave, or hold it for a student arriving next semester.", img: "/photos/lst_ua_kettle.jpg" },
+            { href: "/ua/x/swipe", t: "Swipe", b: "Tinder for random dorm stuff. Right to save.", img: "/photos/lst_ua_fridge_galanz.jpg" },
+            { href: "/ua/x/subs", t: "Split subs", b: "Fill the empty seats on family plans and split the bill evenly.", img: "/photos/lst_ua_tv_tcl.jpg" },
+            { href: "/ua/x/rides", t: "Rides & trips", b: "Carpool home at move-out; split the beach house for break.", img: "/photos/ride_van.jpg" },
+            { href: "/ua/x/meals", t: "Meal share", b: "Students who cook post bulk batches. Grab a portion or trade.", img: "/photos/meal_curry.jpg" },
+            { href: "/ua/x/class-swap", t: "Class swap", b: "x wants y, y wants z, z wants x — we find the loop and time the drop/add.", img: "/photos/lst_ua_chem.jpg" },
+          ].map((m) => (
+            <Link key={m.href} href={m.href} className="group flex items-center gap-4 rounded-[1.5rem] border border-line bg-surface p-3 transition-colors hover:border-line-strong">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={m.img} alt="" className="size-20 shrink-0 rounded-2xl object-cover" loading="lazy" />
+              <span className="min-w-0">
+                <span className="flex items-center gap-1 font-display text-lg font-extrabold">
+                  {m.t} <ArrowRight className="size-4 text-ink-3 transition-transform group-hover:translate-x-0.5" />
+                </span>
+                <span className="text-sm text-ink-2">{m.b}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+        <p className="mt-4 text-sm text-ink-3">Payments happen in Venmo, Zelle, Cash App or cash — Dibs just records that both sides confirmed.</p>
+      </section>
+
       {/* ——— Campus picker ——— */}
       <section id="campuses" className="mx-auto max-w-[1440px] scroll-mt-6 px-safe py-20 md:px-10">
         <p className="font-mono text-xs tracking-[0.2em] text-ink-3 uppercase">Pick your campus</p>
@@ -176,7 +204,6 @@ export default async function Landing() {
               <Link
                 key={c.slug}
                 href={`/${c.slug}`}
-                data-campus={c.slug}
                 className="group relative overflow-hidden rounded-[1.75rem] border border-line bg-surface p-6 transition-transform hover:-translate-y-1"
                 style={{ ["--accent" as string]: c.theme.dark.accent, ["--accent-ink" as string]: c.theme.dark.accentInk }}
               >

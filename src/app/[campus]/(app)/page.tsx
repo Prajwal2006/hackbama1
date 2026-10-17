@@ -37,7 +37,7 @@ export default async function CampusHome({ params }: PageProps<"/[campus]">) {
     <div className="flex flex-col gap-14">
       {/* ——— Hero bento ——— */}
       <Stagger className="grid gap-3 md:grid-cols-6 md:grid-rows-[auto_auto]">
-        <Reveal className="grain relative overflow-hidden rounded-[1.75rem] border border-line bg-surface p-6 md:col-span-4 md:row-span-2 md:p-9">
+        <Reveal data-tour="home-hero" className="grain relative overflow-hidden rounded-[1.75rem] border border-line bg-surface p-6 md:col-span-4 md:row-span-2 md:p-9">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-24 -right-24 size-80 rounded-full opacity-60 blur-3xl"

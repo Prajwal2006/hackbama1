@@ -35,6 +35,7 @@ export const newListingSchema = z
     handoffStart: z.coerce.date().nullable().default(null),
     handoffEnd: z.coerce.date().nullable().default(null),
     pickupSpotId: z.string().max(64).nullable().default(null),
+    holdForMoveIn: z.boolean().default(false),
     locationHint: z.string().trim().max(140).nullable().default(null),
     /** Hue for the generated illustration, so the preview matches the posted listing. */
     artSeed: z.number().int().min(0).max(359).optional(),

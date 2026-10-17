@@ -3,11 +3,12 @@
  * live / ending soon / closed when the demo starts. IDs are stable.
  * Used by the mock adapter and by `pnpm db:seed` for Neon.
  */
+import { buildCommunitySeed, type CommunitySeed } from "./community";
 import type { Bid, Category, Condition, Dib, Listing, Notification, PickupMode, Profile, Save } from "../types";
 
 export const DEMO_STUDENT_ID: Record<string, string> = {
   ua: "usr_ua_demo",
-  demo: "usr_rb_demo",
+  riverbend: "usr_rb_demo",
 };
 
 export type SeedData = {
@@ -17,11 +18,11 @@ export type SeedData = {
   dibs: Dib[];
   saves: Save[];
   notifications: Notification[];
-};
+} & CommunitySeed;
 
 type ListingSeed = {
   id: string;
-  campus: "ua" | "demo";
+  campus: "ua" | "riverbend";
   seller: string;
   title: string;
   description: string;
@@ -43,9 +44,11 @@ type ListingSeed = {
     bids: [string, number, number][]; // [bidder, dollars, hours ago]
   };
   status?: Listing["status"];
+  /** Seller can hold it until move-in. */
+  hold?: boolean;
 };
 
-const PEOPLE: [string, "ua" | "demo", string][] = [
+const PEOPLE: [string, "ua" | "riverbend", string][] = [
   ["usr_ua_demo", "ua", "Demo Student"],
   ["usr_ua_maya", "ua", "Maya R."],
   ["usr_ua_jordan", "ua", "Jordan T."],
@@ -53,18 +56,18 @@ const PEOPLE: [string, "ua" | "demo", string][] = [
   ["usr_ua_cole", "ua", "Cole B."],
   ["usr_ua_ana", "ua", "Ana L."],
   ["usr_ua_dev", "ua", "Dev K."],
-  ["usr_rb_demo", "demo", "Demo Student"],
-  ["usr_rb_sam", "demo", "Sam O."],
-  ["usr_rb_lena", "demo", "Lena W."],
-  ["usr_rb_theo", "demo", "Theo M."],
-  ["usr_rb_ivy", "demo", "Ivy C."],
+  ["usr_rb_demo", "riverbend", "Demo Student"],
+  ["usr_rb_sam", "riverbend", "Sam O."],
+  ["usr_rb_lena", "riverbend", "Lena W."],
+  ["usr_rb_theo", "riverbend", "Theo M."],
+  ["usr_rb_ivy", "riverbend", "Ivy C."],
 ];
 
 const LISTINGS: ListingSeed[] = [
   // ——— UA: auctions ———
   {
     id: "lst_ua_fridge_galanz", campus: "ua", seller: "usr_ua_maya",
-    title: "Galanz 3.1 cu ft retro mini-fridge", description: "Cherry red, freezer compartment works great. Defrosted and wiped down. Fits under a lofted bed.",
+    title: "Retro pink mini-fridge, 3.1 cu ft", description: "Pastel pink with a little freezer compartment. Defrosted and wiped down. Fits under a lofted bed.",
     category: "fridge", condition: "like_new", mode: "auction", pickup: "scheduled", spot: "ridgecrest", ageH: 30,
     auction: { start: 40, increment: 5, startH: -30, endH: 0.42, reserve: 60, buyNow: 140,
       bids: [["usr_ua_jordan", 40, 26], ["usr_ua_priya", 50, 20], ["usr_ua_demo", 60, 12], ["usr_ua_cole", 75, 3]] },
@@ -77,14 +80,14 @@ const LISTINGS: ListingSeed[] = [
       bids: [["usr_ua_ana", 80, 40], ["usr_ua_dev", 100, 22], ["usr_ua_ana", 115, 9]] },
   },
   {
-    id: "lst_ua_futon", campus: "ua", seller: "usr_ua_priya",
+    id: "lst_ua_futon", hold: true, campus: "ua", seller: "usr_ua_priya",
     title: "Charcoal futon that actually folds flat", description: "Sleeps a guest, seats three. You'll need two people and a car — it does not fit in a Corolla, I tried.",
     category: "furniture", condition: "good", mode: "auction", pickup: "scheduled", spot: "lakeside", ageH: 70,
     auction: { start: 30, increment: 5, startH: -70, endH: 0.85,
       bids: [["usr_ua_cole", 30, 60], ["usr_ua_maya", 35, 33], ["usr_ua_jordan", 45, 10], ["usr_ua_maya", 50, 2]] },
   },
   {
-    id: "lst_ua_desk", campus: "ua", seller: "usr_ua_cole",
+    id: "lst_ua_desk", hold: true, campus: "ua", seller: "usr_ua_cole",
     title: "Standing desk, electric, 48\"", description: "Two memory presets. Goes from couch-potato to lecture-podium in 12 seconds.",
     category: "furniture", condition: "like_new", mode: "auction", pickup: "scheduled", spot: "tutwiler", ageH: 12,
     auction: { start: 90, increment: 10, startH: -12, endH: 60, reserve: 150,
@@ -100,7 +103,7 @@ const LISTINGS: ListingSeed[] = [
   },
   {
     id: "lst_ua_ps5", campus: "ua", seller: "usr_ua_ana",
-    title: "PS5 controller — cosmic red", description: "Stick drift? Never heard of her. Charging cable included.",
+    title: "Wireless game controller, white", description: "Stick drift? Never heard of her. Works with PC and console. Charging cable included.",
     category: "electronics", condition: "like_new", mode: "auction", pickup: "now", spot: "ferg", ageH: 80,
     auction: { start: 25, increment: 2, startH: -80, endH: -6, reserve: 45,
       bids: [["usr_ua_cole", 25, 70], ["usr_ua_demo", 30, 40]] },
@@ -120,7 +123,7 @@ const LISTINGS: ListingSeed[] = [
   },
   {
     id: "lst_ua_rug", campus: "ua", seller: "usr_ua_priya",
-    title: "5×7 shag rug, cream", description: "Vacuumed and spot-cleaned. Makes a cinderblock room feel like a home.",
+    title: "5×7 shag rug, crimson & cream", description: "Vacuumed and spot-cleaned. Gameday colors, and it makes a cinderblock room feel like a home.",
     category: "rug", condition: "good", mode: "fixed", price: 35, pickup: "scheduled", spot: "lakeside", ageH: 9,
   },
   {
@@ -134,13 +137,13 @@ const LISTINGS: ListingSeed[] = [
     category: "textbook", condition: "fair", mode: "fixed", price: 45, pickup: "now", spot: "quad", ageH: 2,
   },
   {
-    id: "lst_ua_chair", campus: "ua", seller: "usr_ua_cole",
+    id: "lst_ua_chair", hold: true, campus: "ua", seller: "usr_ua_cole",
     title: "Mesh desk chair with lumbar support", description: "Height and tilt adjust. One armrest squeaks if you lean dramatically.",
     category: "chair", condition: "good", mode: "fixed", price: 40, pickup: "scheduled", spot: "ridgecrest", ageH: 26,
   },
   {
     id: "lst_ua_bedding", campus: "ua", seller: "usr_ua_maya",
-    title: "Twin XL bedding set — duvet, sheets, 2 pillows", description: "Washed and folded. Sage green. Dorm-sized.",
+    title: "Twin XL bedding set — duvet, sheets, 2 pillows", description: "Washed and folded. Crisp white. Dorm-sized.",
     category: "bedding", condition: "like_new", mode: "fixed", price: 28, pickup: "flexible", spot: "paty", ageH: 40,
   },
   {
@@ -150,9 +153,15 @@ const LISTINGS: ListingSeed[] = [
     status: "reserved",
   },
   {
-    id: "lst_ua_shelf", campus: "ua", seller: "usr_ua_ana",
+    id: "lst_ua_shelf", hold: true, campus: "ua", seller: "usr_ua_ana",
     title: "5-tier bookshelf, walnut finish", description: "Disassembles with an allen key (included).",
     category: "furniture", condition: "good", mode: "fixed", price: 20, pickup: "scheduled", spot: "lakeside", ageH: 55,
+  },
+  {
+    id: "lst_ua_kettle", campus: "ua", seller: "usr_ua_demo",
+    title: "Gooseneck electric kettle", description: "Pour-over ready, holds temp. Moving home and it won't fit in the suitcase.",
+    category: "kitchen", condition: "like_new", mode: "fixed", price: 18, pickup: "scheduled", spot: "lakeside", ageH: 20,
+    status: "reserved",
   },
   // ——— UA: free ———
   {
@@ -171,26 +180,26 @@ const LISTINGS: ListingSeed[] = [
     category: "kitchen", condition: "fair", mode: "free", pickup: "flexible", spot: "bryce-lot", ageH: 18,
   },
   {
-    id: "lst_ua_minifridge2", campus: "ua", seller: "usr_ua_ana",
+    id: "lst_ua_minifridge2", hold: true, campus: "ua", seller: "usr_ua_ana",
     title: "Compact 1.7 cu ft fridge — free if you haul it", description: "Works fine, just loud-ish. Good for drinks.",
     category: "fridge", condition: "fair", mode: "free", pickup: "scheduled", spot: "presidential", ageH: 11,
   },
   // ——— Riverbend (demo): auctions ———
   {
-    id: "lst_rb_fridge", campus: "demo", seller: "usr_rb_sam",
+    id: "lst_rb_fridge", campus: "riverbend", seller: "usr_rb_sam",
     title: "Stainless mini-fridge with real freezer", description: "Separate freezer door — ice cubes are back on the menu.",
     category: "fridge", condition: "like_new", mode: "auction", pickup: "scheduled", spot: "north-tower", ageH: 22,
     auction: { start: 50, increment: 5, startH: -22, endH: 0.7, buyNow: 150,
       bids: [["usr_rb_lena", 50, 18], ["usr_rb_theo", 60, 10], ["usr_rb_lena", 70, 3]] },
   },
   {
-    id: "lst_rb_speaker", campus: "demo", seller: "usr_rb_theo",
+    id: "lst_rb_speaker", campus: "riverbend", seller: "usr_rb_theo",
     title: "Bluetooth bookshelf speakers (pair)", description: "Punchy bass, aux and optical in. Roommate-tested volume.",
     category: "electronics", condition: "good", mode: "auction", pickup: "flexible", spot: "union", ageH: 35,
     auction: { start: 35, increment: 5, startH: -35, endH: 40, bids: [["usr_rb_ivy", 35, 30]] },
   },
   {
-    id: "lst_rb_kayak", campus: "demo", seller: "usr_rb_ivy",
+    id: "lst_rb_kayak", campus: "riverbend", seller: "usr_rb_ivy",
     title: "Inflatable kayak + paddle", description: "Used four times on the river. Patch kit included, never needed it.",
     category: "other", condition: "like_new", mode: "auction", pickup: "scheduled", spot: "boathouse", ageH: 60,
     auction: { start: 70, increment: 10, startH: -60, endH: -12, reserve: 90,
@@ -199,43 +208,43 @@ const LISTINGS: ListingSeed[] = [
   },
   // ——— Riverbend: fixed ———
   {
-    id: "lst_rb_couch", campus: "demo", seller: "usr_rb_lena",
+    id: "lst_rb_couch", hold: true, campus: "riverbend", seller: "usr_rb_lena",
     title: "Loveseat, mustard velvet", description: "Statement piece. Pet-free, smoke-free, drama-free.",
     category: "furniture", condition: "good", mode: "fixed", price: 85, pickup: "scheduled", spot: "willow", ageH: 6,
   },
   {
-    id: "lst_rb_lamp", campus: "demo", seller: "usr_rb_sam",
-    title: "Clamp desk lamp, adjustable", description: "Clips to bunk rails. Cool or warm light switch.",
+    id: "lst_rb_lamp", campus: "riverbend", seller: "usr_rb_sam",
+    title: "Pink desk lamp, bendy neck", description: "Adjustable neck, warm LED bulb included. Small enough for a bunk shelf.",
     category: "lamp", condition: "good", mode: "fixed", price: 12, pickup: "now", spot: "north-tower", ageH: 14,
   },
   {
-    id: "lst_rb_micro", campus: "demo", seller: "usr_rb_theo",
+    id: "lst_rb_micro", campus: "riverbend", seller: "usr_rb_theo",
     title: "Microwave/air-fryer combo", description: "The upgrade your dorm deserves. Crisps leftover pizza perfectly.",
     category: "microwave", condition: "like_new", mode: "fixed", price: 60, pickup: "flexible", spot: "union", ageH: 28,
   },
   {
-    id: "lst_rb_books", campus: "demo", seller: "usr_rb_ivy",
+    id: "lst_rb_books", campus: "riverbend", seller: "usr_rb_ivy",
     title: "Intro Psych + Stats textbook bundle", description: "Both current editions. Light pencil notes.",
     category: "textbook", condition: "good", mode: "fixed", price: 50, pickup: "now", spot: "union", ageH: 44,
   },
   {
-    id: "lst_rb_rug", campus: "demo", seller: "usr_rb_lena",
+    id: "lst_rb_rug", campus: "riverbend", seller: "usr_rb_lena",
     title: "Washable runner rug, geometric", description: "Machine washable. Brightens a hallway instantly.",
     category: "rug", condition: "like_new", mode: "fixed", price: 22, pickup: "flexible", spot: "willow", ageH: 19,
   },
   // ——— Riverbend: free ———
   {
-    id: "lst_rb_monstera", campus: "demo", seller: "usr_rb_ivy",
+    id: "lst_rb_monstera", campus: "riverbend", seller: "usr_rb_ivy",
     title: "Baby monstera cutting in a jar", description: "Rooted and ready. Free plant energy.",
     category: "plant", condition: "new", mode: "free", pickup: "now", spot: "boathouse", ageH: 2,
   },
   {
-    id: "lst_rb_chair", campus: "demo", seller: "usr_rb_theo",
-    title: "Folding chairs (set of 2)", description: "Great for game nights. Come grab them.",
+    id: "lst_rb_chair", campus: "riverbend", seller: "usr_rb_theo",
+    title: "Wooden accent chair", description: "Solid and comfy enough for game nights. Come grab it.",
     category: "chair", condition: "fair", mode: "free", pickup: "now", spot: "lot-c", ageH: 8,
   },
   {
-    id: "lst_rb_bedding", campus: "demo", seller: "usr_rb_sam",
+    id: "lst_rb_bedding", campus: "riverbend", seller: "usr_rb_sam",
     title: "Mattress topper, twin XL, 2\"", description: "Memory foam. Vacuum-sealed and clean.",
     category: "bedding", condition: "good", mode: "free", pickup: "scheduled", spot: "north-tower", ageH: 30,
   },
@@ -304,13 +313,14 @@ export function buildSeed(now: Date = new Date()): SeedData {
       priceCents: s.mode === "free" ? 0 : isAuction ? (top?.amountCents ?? s.auction!.start * 100) : (s.price ?? 0) * 100,
       isFree: s.mode === "free",
       currency: "USD",
-      imageUrls: [],
+      imageUrls: [`/photos/${s.id}.jpg`],
       status: s.status ?? "active",
       pickupMode: s.pickup,
       handoffStart: s.pickup === "scheduled" ? t(20) : null,
       handoffEnd: s.pickup === "scheduled" ? t(23) : null,
       locationHint: s.hint ?? null,
       pickupSpotId: s.spot,
+      holdForMoveIn: s.hold ?? false,
       artSeed: hash(s.id) % 360,
       auction: isAuction
         ? {
@@ -332,6 +342,16 @@ export function buildSeed(now: Date = new Date()): SeedData {
 
   const dibs: Dib[] = [
     {
+      id: "dib_ua_kettle",
+      campusId: "ua",
+      listingId: "lst_ua_kettle",
+      buyerId: "usr_ua_maya",
+      status: "active",
+      expiresAt: t(30),
+      createdAt: t(-3),
+      updatedAt: t(-3),
+    },
+    {
       id: "dib_ua_monitor",
       campusId: "ua",
       listingId: "lst_ua_monitor",
@@ -349,14 +369,14 @@ export function buildSeed(now: Date = new Date()): SeedData {
     { id: "sav_3", campusId: "ua", listingId: "lst_ua_fridge_galanz", userId: "usr_ua_jordan", createdAt: t(-20) },
     { id: "sav_4", campusId: "ua", listingId: "lst_ua_fridge_galanz", userId: "usr_ua_ana", createdAt: t(-15) },
     { id: "sav_5", campusId: "ua", listingId: "lst_ua_futon", userId: "usr_ua_dev", createdAt: t(-11) },
-    { id: "sav_6", campusId: "demo", listingId: "lst_rb_couch", userId: "usr_rb_demo", createdAt: t(-3) },
-    { id: "sav_7", campusId: "demo", listingId: "lst_rb_fridge", userId: "usr_rb_ivy", createdAt: t(-6) },
+    { id: "sav_6", campusId: "riverbend", listingId: "lst_rb_couch", userId: "usr_rb_demo", createdAt: t(-3) },
+    { id: "sav_7", campusId: "riverbend", listingId: "lst_rb_fridge", userId: "usr_rb_ivy", createdAt: t(-6) },
   ];
 
   const notifications: Notification[] = [
     {
       id: "ntf_ua_1", campusId: "ua", userId: "usr_ua_demo", kind: "outbid",
-      title: "You've been outbid", body: "Someone bid $75.00 on the Galanz retro mini-fridge.",
+      title: "You've been outbid", body: "Someone bid $75.00 on the retro pink mini-fridge.",
       listingId: "lst_ua_fridge_galanz", readAt: null, createdAt: t(-3),
     },
     {
@@ -370,11 +390,16 @@ export function buildSeed(now: Date = new Date()): SeedData {
       listingId: "lst_ua_bike", readAt: t(-18), createdAt: t(-20),
     },
     {
-      id: "ntf_rb_1", campusId: "demo", userId: "usr_rb_demo", kind: "auction_lost",
+      id: "ntf_rb_1", campusId: "riverbend", userId: "usr_rb_demo", kind: "auction_lost",
       title: "Auction ended", body: "The inflatable kayak sold for $100.00.",
       listingId: "lst_rb_kayak", readAt: null, createdAt: t(-12),
     },
   ];
 
-  return { profiles, listings, bids, dibs, saves, notifications };
+  notifications.push({
+    id: "ntf_ua_4", campusId: "ua", userId: "usr_ua_demo", kind: "dibs_received",
+    title: "Maya called dibs!", body: "Your gooseneck kettle is reserved. Maya says she sent $18 on Venmo.",
+    listingId: "lst_ua_kettle", readAt: null, createdAt: t(-1),
+  });
+  return { profiles, listings, bids, dibs, saves, notifications, ...buildCommunitySeed(now, listings) };
 }

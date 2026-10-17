@@ -11,6 +11,7 @@ import type {
   Save,
 } from "./types";
 import type { NewListingInput } from "@/features/listings/schema";
+import type { Handoff, HandoffPhase, HandoffView, PaymentMethod } from "./community-types";
 
 /**
  * A trusted identity. Only ever constructed server-side from a verified
@@ -84,6 +85,13 @@ export interface MarketRepository {
   listDibsForSeller(actor: Actor): Promise<(Dib & { listing: ListingView; buyerName: string })[]>;
   getActiveDibForListing(listingId: string): Promise<Dib | null>;
 
+  // Handoffs (pickup + payment acknowledgement; money moves outside Dibs)
+  listHandoffs(actor: Actor): Promise<HandoffView[]>;
+  getOpenHandoffForListing(listingId: string): Promise<Handoff | null>;
+  scheduleHandoff(actor: Actor, handoffId: string, phase: HandoffPhase, at: Date): Promise<Result<Handoff>>;
+  ackHandoff(actor: Actor, handoffId: string, what: "sent" | "received", method: PaymentMethod | null): Promise<Result<Handoff>>;
+  completeHandoff(actor: Actor, handoffId: string): Promise<Result<Handoff>>;
+
   // Saves
   toggleSave(actor: Actor, listingId: string): Promise<Result<{ saved: boolean }>>;
   listSavedIds(actor: Actor): Promise<string[]>;
@@ -99,6 +107,8 @@ export interface MarketRepository {
 
   /** Expires stale dibs and settles due auctions. Idempotent and safe to run concurrently. */
   runMaintenance(now?: Date): Promise<MaintenanceReport>;
+  /** Demo only: move an open auction's deadline to now and settle it. */
+  demoEndAuction(listingId: string): Promise<Result<void>>;
   /** Settles one auction now if it is due. Idempotent. */
   settleAuction(listingId: string, now?: Date): Promise<Result<ListingView>>;
 }

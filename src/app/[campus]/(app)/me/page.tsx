@@ -64,7 +64,7 @@ export default async function MePage({ params, searchParams }: PageProps<"/[camp
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full bg-sticker px-2 py-0.5 font-semibold text-[#16120f]">
-                <FlaskConical className="size-3.5" /> Simulated verification (demo)
+                <FlaskConical className="size-3.5" /> {viewer.profile.email ? "Code shown on screen — not inbox-verified" : "Demo student (simulated)"}
               </span>
             )}
             {viewer.profile.email ? <span>{viewer.profile.email}</span> : null}

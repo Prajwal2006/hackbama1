@@ -7,7 +7,7 @@ const SIZES = [
   { w: 1536, h: 900 },
   { w: 844, h: 390 }, // landscape phone
 ];
-const ROUTES = ["/", "/ua", "/ua/browse", "/ua/listing/lst_ua_fridge_galanz", "/demo", "/ua/x/swipe", "/ua/x/rides"];
+const ROUTES = ["/", "/demo", "/ua", "/ua/browse", "/ua/listing/lst_ua_fridge_galanz", "/riverbend", "/ua/x/swipe", "/ua/x/rides", "/ua/x/meals", "/ua/x/subs", "/ua/x/class-swap"];
 
 for (const s of SIZES) {
   test(`no horizontal overflow at ${s.w}x${s.h}`, async ({ page }) => {

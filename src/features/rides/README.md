@@ -1,7 +1,5 @@
 # rides
 
-Owner: **dev-b** · branch: `feature/rides` · registry id: `rides`
+Owner: **dev-b** · route `x/rides` · status: live
 
-Rides and trips. Reuse `pickupSpots` from campus config as meeting points.
-
-To ship: build here, add `src/app/[campus]/(app)/x/rides/page.tsx`, then set `status: "live"` in `src/config/features.ts`.
+Rides and trips. Drivers post from → to, departure time, seats and a per-seat share; "trip" mode is for split-cost break trips. Seats can never be oversold (post row is locked on join). Same payment acknowledgement flow as subs. Data: `community_posts` (kind `ride`).

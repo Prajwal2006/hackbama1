@@ -8,6 +8,13 @@
       "when": 1792260678200,
       "tag": "0000_premium_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792264443182,
+      "tag": "0001_warm_molten_man",
+      "breakpoints": true
     }
   ]
 }

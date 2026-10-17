@@ -22,6 +22,9 @@ import {
   auctionPhase,
 } from "@/features/auctions/domain";
 import { checkClaim, dibsExpiry } from "@/features/dibs/domain";
+import { checkHandoffAck, checkSchedule } from "@/features/community/domain";
+import { getCampus } from "@/config/campuses";
+import type { Handoff, HandoffView, PaymentMethod } from "../../community-types";
 import { validateAuctionTiming } from "@/features/listings/schema";
 import { formatCents } from "@/lib/money";
 import { canTransact, canViewCampus } from "@/lib/policy";
@@ -41,7 +44,7 @@ import type {
 } from "../../types";
 
 type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
-const { listings, bids, dibs, saves, notifications, profiles } = schema;
+const { listings, bids, dibs, saves, notifications, profiles, handoffs } = schema;
 
 const nid = (prefix: string) => `${prefix}_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
 
@@ -78,6 +81,7 @@ function toListing(r: ListingRow): Listing {
     handoffEnd: r.handoffEnd,
     locationHint: r.locationHint,
     pickupSpotId: r.pickupSpotId,
+    holdForMoveIn: r.holdForMoveIn,
     artSeed: r.artSeed,
     auction:
       r.saleMode === "auction"
@@ -156,6 +160,17 @@ async function viewById(db: Db, id: string) {
   return (await selectViews(db, eq(listings.id, id), undefined, 1))[0] ?? null;
 }
 
+function insertHandoff(
+  db: Db,
+  h: { campusId: string; listingId: string; sellerId: string; buyerId: string; source: "dibs" | "auction"; amountCents: number; dibId: string | null },
+) {
+  return db.insert(handoffs).values({ id: nid("ho"), ...h });
+}
+
+function toHandoff(r: typeof handoffs.$inferSelect): Handoff {
+  return { ...r, paymentMethod: r.paymentMethod as PaymentMethod | null };
+}
+
 function insertNotification(
   db: Db,
   n: { campusId: string; userId: string; kind: NotificationKind; title: string; body: string; listingId: string | null },
@@ -221,6 +236,10 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
       .where(and(eq(listings.id, l.id), isNull(listings.settledAt)));
     const price = result.winningBid ? formatCents(result.winningBid.amountCents) : null;
     if (result.winningBid) {
+      await insertHandoff(db, {
+        campusId: l.campusId, listingId: l.id, sellerId: l.sellerId, buyerId: result.winningBid.bidderId,
+        source: "auction", amountCents: result.winningBid.amountCents, dibId: null,
+      });
       await insertNotification(db, {
         campusId: l.campusId, userId: result.winningBid.bidderId, kind: "auction_won", listingId: l.id,
         title: "You won! 🎉", body: `${l.title} is yours for ${price}. Message the seller to set up pickup.`,
@@ -280,6 +299,7 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
         .where(and(eq(dibs.status, "active"), lte(dibs.expiresAt, now)))
         .returning();
       for (const d of expired) {
+        await db.update(handoffs).set({ status: "cancelled", updatedAt: now }).where(and(eq(handoffs.dibId, d.id), eq(handoffs.status, "pending")));
         const [l] = await db
           .update(listings)
           .set({ status: "active", updatedAt: now })
@@ -379,6 +399,7 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
           handoffEnd: input.handoffEnd,
           locationHint: input.locationHint,
           pickupSpotId: input.pickupSpotId,
+          holdForMoveIn: input.holdForMoveIn,
           artSeed: input.artSeed ?? Math.floor(Math.random() * 360),
           ...(a
             ? {
@@ -415,6 +436,7 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
         }
         if (status !== "sold") {
           await db.update(dibs).set({ status: "cancelled", updatedAt: now }).where(and(eq(dibs.listingId, l.id), eq(dibs.status, "active")));
+          await db.update(handoffs).set({ status: "cancelled", updatedAt: now }).where(and(eq(handoffs.listingId, l.id), eq(handoffs.status, "pending")));
         }
         const [row] = await db.update(listings).set({ status, updatedAt: now }).where(eq(listings.id, l.id)).returning();
         return ok(toListing(row));
@@ -511,6 +533,10 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
           .update(listings)
           .set({ status: "sold", priceCents: bid.amountCents, settledAt: now, outcome: "bought_now", winningBidId: bid.id, updatedAt: now })
           .where(eq(listings.id, l.id));
+        await insertHandoff(db, {
+          campusId: l.campusId, listingId: l.id, sellerId: l.sellerId, buyerId: actor.userId,
+          source: "auction", amountCents: bid.amountCents, dibId: null,
+        });
         await insertNotification(db, {
           campusId: l.campusId, userId: actor.userId, kind: "auction_won", listingId: l.id,
           title: "Bought it! 🎉", body: `${l.title} is yours for ${formatCents(bid.amountCents)}.`,
@@ -550,6 +576,11 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
           .values({ id: nid("dib"), campusId: l.campusId, listingId: l.id, buyerId: actor.userId, status: "active", expiresAt: dibsExpiry(l.campusId, now) })
           .returning();
         await db.update(listings).set({ status: "reserved", updatedAt: now }).where(eq(listings.id, l.id));
+        await db.update(handoffs).set({ status: "cancelled", updatedAt: now }).where(and(eq(handoffs.listingId, l.id), eq(handoffs.status, "pending")));
+        await insertHandoff(db, {
+          campusId: l.campusId, listingId: l.id, sellerId: l.sellerId, buyerId: actor.userId,
+          source: "dibs", amountCents: l.isFree ? 0 : l.priceCents, dibId: dib.id,
+        });
         await insertNotification(db, {
           campusId: l.campusId, userId: actor.userId, kind: "dibs_confirmed", listingId: l.id,
           title: "Dibs locked in", body: `${l.title} is held for you until pickup.`,
@@ -573,6 +604,7 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
         if (d.status !== "active") return fail("unavailable", "This reservation is no longer active.");
         const now = new Date();
         const [row] = await db.update(dibs).set({ status: "cancelled", updatedAt: now }).where(eq(dibs.id, dibId)).returning();
+        await db.update(handoffs).set({ status: "cancelled", updatedAt: now }).where(and(eq(handoffs.dibId, dibId), eq(handoffs.status, "pending")));
         await db.update(listings).set({ status: "active", updatedAt: now }).where(and(eq(listings.id, d.listingId), eq(listings.status, "reserved")));
         return ok(toDib(row));
       });
@@ -586,6 +618,12 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
         if (l?.sellerId !== actor.userId) return fail("forbidden", "Only the seller can confirm a handoff.");
         if (d.status !== "active") return fail("unavailable", "This reservation is no longer active.");
         const now = new Date();
+        const [ho] = await db.select().from(handoffs).where(and(eq(handoffs.dibId, dibId), eq(handoffs.status, "pending")));
+        if (ho) {
+          const check = checkHandoffAck(toHandoff(ho), actor, "complete");
+          if (!check.ok) return check;
+          await db.update(handoffs).set({ status: "completed", completedAt: now, updatedAt: now }).where(eq(handoffs.id, ho.id));
+        }
         const [row] = await db.update(dibs).set({ status: "completed", updatedAt: now }).where(eq(dibs.id, dibId)).returning();
         await db.update(listings).set({ status: "sold", updatedAt: now }).where(eq(listings.id, d.listingId));
         return ok(toDib(row));
@@ -618,6 +656,119 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
     async getActiveDibForListing(listingId) {
       const [row] = await http.select().from(dibs).where(and(eq(dibs.listingId, listingId), eq(dibs.status, "active")));
       return row ? toDib(row) : null;
+    },
+
+    async listHandoffs(actor) {
+      await maybeMaintain();
+      const rows = await http
+        .select()
+        .from(handoffs)
+        .where(
+          and(
+            eq(handoffs.campusId, actor.campusId),
+            or(eq(handoffs.buyerId, actor.userId), eq(handoffs.sellerId, actor.userId)),
+            sql`${handoffs.status} <> 'cancelled'`,
+          ),
+        )
+        .orderBy(sql`${handoffs.scheduledAt} asc nulls last`, desc(handoffs.createdAt));
+      if (!rows.length) return [];
+      const [ls, ps] = await Promise.all([
+        http.select().from(listings).where(inArray(listings.id, rows.map((r) => r.listingId))),
+        http.select({ id: profiles.id, name: profiles.displayName }).from(profiles)
+          .where(inArray(profiles.id, [...new Set(rows.flatMap((r) => [r.buyerId, r.sellerId]))])),
+      ]);
+      const lById = new Map(ls.map((l) => [l.id, l]));
+      const name = (uid: string) => ps.find((p) => p.id === uid)?.name ?? "Student";
+      return rows.map((h): HandoffView => {
+        const l = lById.get(h.listingId);
+        return {
+          ...toHandoff(h),
+          listingTitle: l?.title ?? "Item",
+          listingImage: l?.imageUrls[0] ?? null,
+          listingCategory: l?.category ?? "other",
+          listingArtSeed: l?.artSeed ?? 0,
+          pickupSpotId: l?.pickupSpotId ?? null,
+          holdForMoveIn: l?.holdForMoveIn ?? false,
+          sellerName: name(h.sellerId),
+          buyerName: name(h.buyerId),
+          role: h.buyerId === actor.userId ? "buyer" : "seller",
+        };
+      });
+    },
+
+    async getOpenHandoffForListing(listingId) {
+      const [row] = await http.select().from(handoffs).where(and(eq(handoffs.listingId, listingId), eq(handoffs.status, "pending")));
+      return row ? toHandoff(row) : null;
+    },
+
+    async scheduleHandoff(actor, handoffId, phase, at) {
+      return guarded(async (db) => {
+        const [row] = await db.select().from(handoffs).where(eq(handoffs.id, handoffId)).for("update");
+        if (!row) return fail("not_found", "Handoff not found.");
+        const h = toHandoff(row);
+        const check = checkHandoffAck(h, actor, "schedule");
+        if (!check.ok) return check;
+        const [l] = await db.select().from(listings).where(eq(listings.id, h.listingId));
+        const campus = getCampus(h.campusId)!;
+        const now = new Date();
+        const when = checkSchedule({ phase, at, now, moveInDate: campus.moveInDate, holdForMoveIn: !!l?.holdForMoveIn });
+        if (!when.ok) return when;
+        const [updated] = await db.update(handoffs).set({ phase, scheduledAt: at, updatedAt: now }).where(eq(handoffs.id, h.id)).returning();
+        if (h.dibId) {
+          await db
+            .update(dibs)
+            .set({ expiresAt: sql`greatest(${dibs.expiresAt}, ${new Date(at.getTime() + 6 * 3_600_000)})`, updatedAt: now })
+            .where(and(eq(dibs.id, h.dibId), eq(dibs.status, "active")));
+        }
+        await insertNotification(db, {
+          campusId: h.campusId, userId: actor.userId === h.buyerId ? h.sellerId : h.buyerId, kind: "dibs_confirmed", listingId: h.listingId,
+          title: phase === "move_in" ? "Move-in pickup scheduled" : "Pickup scheduled",
+          body: `${l?.title ?? "Item"}: ${at.toLocaleString("en-US", { timeZone: campus.timezone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`,
+        });
+        return ok(toHandoff(updated));
+      });
+    },
+
+    async ackHandoff(actor, handoffId, what, method) {
+      return guarded(async (db) => {
+        const [row] = await db.select().from(handoffs).where(eq(handoffs.id, handoffId)).for("update");
+        if (!row) return fail("not_found", "Handoff not found.");
+        const h = toHandoff(row);
+        const check = checkHandoffAck(h, actor, what);
+        if (!check.ok) return check;
+        const now = new Date();
+        const patch =
+          what === "sent"
+            ? { paymentSentAt: now, paymentMethod: method ?? h.paymentMethod, updatedAt: now }
+            : { paymentReceivedAt: now, paymentMethod: h.paymentMethod ?? method, updatedAt: now };
+        const [updated] = await db.update(handoffs).set(patch).where(eq(handoffs.id, h.id)).returning();
+        const [l] = await db.select({ title: listings.title }).from(listings).where(eq(listings.id, h.listingId));
+        await insertNotification(db, {
+          campusId: h.campusId, userId: what === "sent" ? h.sellerId : h.buyerId, kind: "dibs_confirmed", listingId: h.listingId,
+          title: what === "sent" ? "Payment sent" : "Payment received",
+          body: `${formatCents(h.amountCents)} for ${l?.title ?? "an item"}${updated.paymentMethod ? ` via ${updated.paymentMethod}` : ""}.`,
+        });
+        return ok(toHandoff(updated));
+      });
+    },
+
+    async completeHandoff(actor, handoffId) {
+      return guarded(async (db) => {
+        const [row] = await db.select().from(handoffs).where(eq(handoffs.id, handoffId)).for("update");
+        if (!row) return fail("not_found", "Handoff not found.");
+        const h = toHandoff(row);
+        const check = checkHandoffAck(h, actor, "complete");
+        if (!check.ok) return check;
+        const now = new Date();
+        const [updated] = await db.update(handoffs).set({ status: "completed", completedAt: now, updatedAt: now }).where(eq(handoffs.id, h.id)).returning();
+        if (h.dibId) await db.update(dibs).set({ status: "completed", updatedAt: now }).where(and(eq(dibs.id, h.dibId), eq(dibs.status, "active")));
+        const [l] = await db.update(listings).set({ status: "sold", updatedAt: now }).where(eq(listings.id, h.listingId)).returning({ title: listings.title });
+        await insertNotification(db, {
+          campusId: h.campusId, userId: h.buyerId, kind: "dibs_confirmed", listingId: h.listingId,
+          title: "Handoff complete", body: `${l?.title ?? "Item"} is officially yours. Enjoy!`,
+        });
+        return ok(toHandoff(updated));
+      });
     },
 
     async toggleSave(actor, listingId) {
@@ -702,6 +853,18 @@ export function createNeonRepository(databaseUrl: string): MarketRepository {
 
     async runMaintenance(at) {
       return maintenance(at ?? new Date());
+    },
+
+    async demoEndAuction(listingId) {
+      const now = new Date();
+      const rows = await http
+        .update(listings)
+        .set({ auctionEndsAt: new Date(now.getTime() - 1000), updatedAt: now })
+        .where(and(eq(listings.id, listingId), eq(listings.saleMode, "auction"), isNull(listings.settledAt), eq(listings.status, "active")))
+        .returning({ id: listings.id });
+      if (!rows.length) return fail("not_found", "No open auction with that id.");
+      await settleOne(listingId, now);
+      return ok(undefined);
     },
 
     async settleAuction(listingId, at) {

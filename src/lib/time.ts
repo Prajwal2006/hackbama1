@@ -43,3 +43,26 @@ export function daysUntil(isoDate: string, now = new Date()) {
   const target = new Date(`${isoDate}T12:00:00Z`).getTime();
   return Math.ceil((target - now.getTime()) / 86_400_000);
 }
+
+/** Offset (minutes) of `timeZone` from UTC at `instant`. */
+function tzOffsetMinutes(instant: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(instant);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return (asUtc - instant.getTime()) / 60_000;
+}
+
+/** The instant when it is `hour:minute` on `ymd` (YYYY-MM-DD) in `timeZone`. */
+export function atLocal(ymd: string, hour: number, minute: number, timeZone: string): Date {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const guess = new Date(Date.UTC(y, m - 1, d, hour, minute));
+  return new Date(guess.getTime() - tzOffsetMinutes(guess, timeZone) * 60_000);
+}
+
+/** YYYY-MM-DD for `instant` in `timeZone`, optionally shifted by whole days. */
+export function localYmd(instant: Date, timeZone: string, addDays = 0) {
+  const shifted = new Date(instant.getTime() + addDays * 86_400_000);
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(shifted);
+}

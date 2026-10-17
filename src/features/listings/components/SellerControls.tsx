@@ -4,9 +4,10 @@ import { Check, FlaskConical, Undo2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { endAuctionNowAction } from "@/features/demo/actions";
-import { completeDibsAction, cancelDibsAction } from "@/features/dibs/actions";
+import { cancelDibsAction } from "@/features/dibs/actions";
 import type { ListingStatus, SaleMode } from "@/data/types";
 import { setListingStatusAction } from "../actions";
 
@@ -44,11 +45,11 @@ export function SellerControls({
       <p className="mb-3 font-mono text-xs tracking-[0.2em] text-ink-3 uppercase">Seller controls</p>
       {activeDib ? (
         <div className="mb-3 rounded-xl bg-surface-2 p-3 text-sm">
-          <strong>{activeDib.buyerName}</strong> called dibs. Hand it off, then confirm.
+          <strong>{activeDib.buyerName}</strong> called dibs. Schedule the pickup and confirm payment in Handoffs.
           <div className="mt-2 flex flex-wrap gap-2">
-            <Button size="sm" disabled={pending} onClick={() => run(() => completeDibsAction(campus, activeDib.id), "Handoff confirmed — marked sold")}>
-              <Check /> Confirm handoff
-            </Button>
+            <Link href={`/${campus}/x/handoffs`} className={buttonVariants({ size: "sm" })}>
+              <Check /> Open handoff
+            </Link>
             <Button size="sm" variant="ghost" disabled={pending} onClick={() => run(() => cancelDibsAction(campus, activeDib.id), "Reservation released")}>
               <X /> Release
             </Button>

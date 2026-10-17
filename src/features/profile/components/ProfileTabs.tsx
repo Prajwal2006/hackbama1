@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export function ProfileTabs({ tabs, active }: { tabs: { id: string; label: string; count: number }[]; active: string }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Profile sections" className="-mx-4 flex gap-1 overflow-x-auto border-b border-line px-4 scrollbar-none md:mx-0 md:px-0">
+    <nav aria-label="Profile sections" data-tour="profile" className="-mx-4 flex gap-1 overflow-x-auto border-b border-line px-4 scrollbar-none md:mx-0 md:px-0">
       {tabs.map((t) => (
         <Link
           key={t.id}

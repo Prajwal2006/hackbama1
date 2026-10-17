@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { listCampuses, type CampusConfig } from "@/config/campuses";
 import { signOutAction } from "@/features/auth/actions";
-import { authMode, dataMode, isDemo } from "@/lib/env";
+import { dataMode, demoToolsEnabled, emailDelivery, isDemo } from "@/lib/env";
 import { cn } from "@/lib/utils";
 import { CampusTheme } from "./CampusTheme";
 import { CommandPaletteProvider, PaletteTrigger } from "./CommandPalette";
@@ -47,7 +47,7 @@ export function AppShell({
     <div data-campus={campus.slug} className="min-h-dvh bg-bg text-ink">
       <CampusTheme campus={campus} />
       <CommandPaletteProvider campus={campus.slug} campuses={campuses}>
-        {isDemo ? <DemoBanner dataMode={dataMode} authMode={authMode} /> : null}
+        {isDemo ? <DemoBanner dataMode={dataMode} emailDelivery={emailDelivery} canReset={demoToolsEnabled} /> : null}
         <div className="flex">
           <aside className="sticky top-0 hidden h-dvh w-[76px] shrink-0 flex-col border-r border-line bg-bg-2/60 px-3 py-5 md:flex lg:w-64 lg:px-4">
             <Link href={`/${campus.slug}`} className="mb-6 flex items-center px-1 lg:px-2" aria-label={`Dibs ${campus.shortName} home`}>
