@@ -98,5 +98,18 @@
     "placement": "floor",
     "description": "A standard clear plastic water bottle with a white cap.",
     "scanned": true
+  },
+  {
+    "id": "scan-insulated-water-bottle-18b9",
+    "name": "Insulated Water Bottle",
+    "model": "/models/scan-insulated-water-bottle-18b9.glb",
+    "dimensionsCm": {
+      "w": 14,
+      "d": 12,
+      "h": 28
+    },
+    "placement": "floor",
+    "description": "Black matte stainless steel water bottle with a screw-top cap and attached carrying loop.",
+    "scanned": true
   }
 ]
