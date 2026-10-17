@@ -1,7 +1,5 @@
 # meals
 
-Owner: **dev-b** · branch: `feature/meals` · registry id: `meals`
+Owner: **dev-b** · route `x/meals` · status: live
 
-Meal swipe / dining-dollar sharing. Reuse the dibs domain rules (`features/dibs/domain.ts`) for claims.
-
-To ship: build here, add `src/app/[campus]/(app)/x/meals/page.tsx`, then set `status: "live"` in `src/config/features.ts`.
+Off-campus meal plan: students who cook post bulk batches (dish, portions, pickup spot/time, dietary tags, price per portion or a trade). Others claim portions; payment acknowledged on both sides. Data: `community_posts` (kind `meal`).

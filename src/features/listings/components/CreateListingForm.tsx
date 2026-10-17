@@ -42,6 +42,7 @@ const formSchema = z
     handoffStart: z.string(),
     handoffEnd: z.string(),
     locationHint: z.string().max(140),
+    holdForMoveIn: z.boolean(),
   })
   .superRefine((v, ctx) => {
     const c = (s: string) => parseDollarsToCents(s);
@@ -69,7 +70,7 @@ type FormValues = z.infer<typeof formSchema>;
 const STEPS: { title: string; fields: FieldPath<FormValues>[] }[] = [
   { title: "What is it?", fields: ["title", "category", "condition", "description"] },
   { title: "How are you selling?", fields: ["saleMode", "price", "startingBid", "increment", "endsAt", "reserve", "buyNow"] },
-  { title: "Handoff", fields: ["pickupMode", "pickupSpotId", "handoffStart", "handoffEnd", "locationHint"] },
+  { title: "Handoff", fields: ["pickupMode", "pickupSpotId", "handoffStart", "handoffEnd", "locationHint", "holdForMoveIn"] },
   { title: "Look good?", fields: [] },
 ];
 
@@ -98,7 +99,7 @@ export function CreateListingForm({ campus, spots, seed }: { campus: string; spo
       title: "", description: "", category: "fridge", condition: "good", saleMode: "fixed",
       price: "", startingBid: "", increment: "5", endsAt: localInput(new Date(openedAt + 3 * 86_400_000)),
       reserve: "", buyNow: "", pickupMode: "flexible", pickupSpotId: spots[0]?.id ?? "",
-      handoffStart: "", handoffEnd: "", locationHint: "",
+      handoffStart: "", handoffEnd: "", locationHint: "", holdForMoveIn: false,
     },
   });
   const { register, formState: { errors }, setValue, trigger, handleSubmit, control } = form;
@@ -149,6 +150,7 @@ export function CreateListingForm({ campus, spots, seed }: { campus: string; spo
         handoffEnd: d.handoffEnd ? (new Date(d.handoffEnd).toISOString() as unknown as Date) : null,
         pickupSpotId: d.pickupSpotId || null,
         locationHint: d.locationHint.trim() || null,
+        holdForMoveIn: d.holdForMoveIn,
         artSeed: seed,
       });
       if (!r.ok) {
@@ -346,6 +348,13 @@ export function CreateListingForm({ campus, spots, seed }: { campus: string; spo
                   <Input id="locationHint" placeholder="Lobby by the mailboxes" {...register("locationHint")} />
                   <p className="mt-1 text-xs text-ink-3">Keep it public — no room numbers. Share details after someone calls dibs.</p>
                 </div>
+                <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl border border-line-strong p-3.5">
+                  <input type="checkbox" className="mt-0.5 size-5 accent-[var(--accent)]" {...register("holdForMoveIn")} />
+                  <span className="text-sm">
+                    <strong>I can hold it until move-in</strong>
+                    <span className="block text-ink-3">A friend, storage unit or summer sublet keeps it, and a student arriving next semester picks it up.</span>
+                  </span>
+                </label>
               </>
             ) : null}
 

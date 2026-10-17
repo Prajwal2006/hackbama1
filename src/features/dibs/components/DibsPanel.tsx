@@ -80,12 +80,15 @@ export function DibsPanel(p: DibsPanelProps) {
             <span className="font-mono text-accent">01</span> Meet at <strong className="text-ink">{p.pickupText}</strong>
           </li>
           <li className="flex gap-2">
-            <span className="font-mono text-accent">02</span> {p.isFree ? "Grab it — it's free." : "Pay the seller at pickup (cash or app)."}
+            <span className="font-mono text-accent">02</span> {p.isFree ? "Grab it — it's free." : "Pay the seller in any app (Venmo, Zelle, cash…) and mark it sent."}
           </li>
           <li className="flex gap-2">
             <span className="font-mono text-accent">03</span> Seller confirms the handoff in Dibs.
           </li>
         </ol>
+        <Link href={`/${p.campus}/x/handoffs`} className={buttonVariants({ size: "sm", className: "mt-3" })} data-testid="go-handoff">
+          Schedule pickup &amp; payment →
+        </Link>
         <Button variant="ghost" size="sm" className="mt-3 -ml-2" disabled={pending} onClick={() => cancel(p.myDib!.id)}>
           Release my dibs
         </Button>
@@ -136,7 +139,7 @@ export function DibsPanel(p: DibsPanelProps) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" data-tour="dibs">
       <ClickSpark ref={spark} count={18} radius={110} />
       <DibsStamp show={stamp} onDone={onStampDone} />
       {body}

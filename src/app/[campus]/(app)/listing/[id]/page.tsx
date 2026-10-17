@@ -13,7 +13,7 @@ import { ListingMedia, PriceSticker, StatusStamp } from "@/features/listings/com
 import { SaveButton } from "@/features/listings/components/SaveButton";
 import { DemoEndAuction, SellerControls } from "@/features/listings/components/SellerControls";
 import { loadCampusContext } from "@/lib/campus";
-import { dataMode } from "@/lib/env";
+import { demoToolsEnabled } from "@/lib/env";
 import { formatCents } from "@/lib/money";
 import { canTransact } from "@/lib/policy";
 import { formatInZone, relativeTime } from "@/lib/time";
@@ -166,13 +166,17 @@ export default async function ListingPage({ params }: PageProps<"/[campus]/listi
               bidCount={listing.bidCount}
               settled={!!listing.auction?.settledAt}
               activeDib={sellerDib ? { id: sellerDib.id, buyerName: sellerDib.buyerName } : null}
-              demoTools={dataMode === "mock"}
+              demoTools={demoToolsEnabled}
             />
-          ) : dataMode === "mock" && listing.saleMode === "auction" && listing.status === "active" && !listing.auction?.settledAt ? (
-            <div className="rounded-[1.4rem] border border-dashed border-line-strong p-4">
-              <p className="font-mono text-xs tracking-[0.2em] text-ink-3 uppercase">Demo tools</p>
-              <p className="mt-1 text-sm text-ink-2">Skip the wait: move the deadline to now and run the real settlement logic.</p>
-              <DemoEndAuction listingId={listing.id} />
+          ) : listing.saleMode === "auction" && listing.status === "active" && !listing.auction?.settledAt ? (
+            <div className="rounded-[1.4rem] border border-dashed border-line-strong p-4" data-tour="demo-end">
+              <p className="font-mono text-xs tracking-[0.2em] text-ink-3 uppercase">{demoToolsEnabled ? "Demo tools" : "Settlement"}</p>
+              <p className="mt-1 text-sm text-ink-2">
+                {demoToolsEnabled
+                  ? "Skip the wait: move the deadline to now and run the real settlement logic."
+                  : "When the clock hits zero, a scheduled job (and any page view) settles the auction exactly once: highest bid wins if it meets the reserve, and everyone is notified."}
+              </p>
+              {demoToolsEnabled ? <DemoEndAuction listingId={listing.id} /> : null}
             </div>
           ) : null}
 

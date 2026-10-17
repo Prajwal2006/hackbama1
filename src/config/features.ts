@@ -60,21 +60,19 @@ export const FEATURES: Feature[] = [
     status: "live", owner: "core", group: "you", nav: { sidebar: true, mobileTab: 4, palette: true }, requiresAuth: true,
     keywords: ["profile", "account", "bids", "saved"] },
 
-  // ——— Future modules (split between dev-a and dev-b) ———
+  // ——— Student life modules (each owns src/features/<id>/) ———
+  { id: "handoffs", title: "Handoffs", blurb: "Schedule pickups for move-out or hold until move-in; both sides confirm payment.", icon: "calendar", route: "x/handoffs",
+    status: "live", owner: "dev-a", group: "you", nav: { sidebar: true, palette: true }, requiresAuth: true, keywords: ["pickup", "schedule", "move-in", "move-out", "payment"] },
   { id: "swipe", title: "Swipe", blurb: "Flick through listings: right to save, left to skip.", icon: "layers", route: "x/swipe",
-    status: "beta", owner: "dev-a", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["discover", "tinder"] },
-  { id: "handoffs", title: "Handoffs", blurb: "Move-out / move-in pickup scheduling with hall time slots.", icon: "calendar", route: "x/handoffs",
-    status: "planned", owner: "dev-a", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["pickup", "schedule", "move-in"] },
-  { id: "room-fit", title: "Room Fit", blurb: "Drop listings into a 3D model of your dorm to see if they fit.", icon: "box", route: "x/room-fit",
-    status: "planned", owner: "dev-a", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["3d", "measure"] },
-  { id: "subs", title: "Split subs", blurb: "Find people to split streaming and software plans.", icon: "wallet", route: "x/subs",
-    status: "planned", owner: "dev-b", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["subscription"] },
-  { id: "rides", title: "Rides & trips", blurb: "Share a ride home at move-out or group up for break trips.", icon: "car", route: "x/rides",
-    status: "planned", owner: "dev-b", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["carpool", "travel"] },
-  { id: "meals", title: "Meal share", blurb: "Trade spare meal swipes and dining dollars.", icon: "utensils", route: "x/meals",
-    status: "planned", owner: "dev-b", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["swipes", "dining"] },
-  { id: "class-swap", title: "Class swap", blurb: "Match with someone who has the section you want.", icon: "repeat", route: "x/class-swap",
-    status: "planned", owner: "dev-b", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["schedule", "section"] },
+    status: "live", owner: "dev-a", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["discover", "tinder"] },
+  { id: "subs", title: "Split subs", blurb: "Fill open seats on family plans and split the bill.", icon: "wallet", route: "x/subs",
+    status: "live", owner: "dev-b", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["subscription", "spotify", "netflix"] },
+  { id: "rides", title: "Rides & trips", blurb: "Carpool home at move-out or split a break trip.", icon: "car", route: "x/rides",
+    status: "live", owner: "dev-b", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["carpool", "travel", "airport"] },
+  { id: "meals", title: "Meal share", blurb: "Students who cook share bulk batches — buy a portion or trade.", icon: "utensils", route: "x/meals",
+    status: "live", owner: "dev-b", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["food", "cook", "meal plan"] },
+  { id: "class-swap", title: "Class swap", blurb: "2-, 3- and 4-way section swaps with a coordinated drop/add.", icon: "repeat", route: "x/class-swap",
+    status: "live", owner: "dev-a", group: "labs", nav: { sidebar: true, palette: true }, keywords: ["schedule", "section", "registration"] },
 ];
 
 export function featuresFor(campus: string) {

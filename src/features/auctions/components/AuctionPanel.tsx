@@ -133,7 +133,7 @@ export function AuctionPanel(p: AuctionPanelProps) {
   })();
 
   return (
-    <div className="relative">
+    <div className="relative" data-tour="auction">
       <ClickSpark ref={spark} count={16} radius={100} />
       <div className="rounded-[1.4rem] border border-line bg-surface p-4 sm:p-5" data-testid="auction-panel">
         <div className="flex items-center justify-between">
@@ -188,7 +188,10 @@ export function AuctionPanel(p: AuctionPanelProps) {
         {p.iWon ? (
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-sticker p-4 text-[#16120f]">
             <Trophy className="size-6" />
-            <p className="font-display font-extrabold">You won this one. Message the seller and arrange pickup.</p>
+            <p className="flex-1 font-display font-extrabold">You won this one.</p>
+            <Link href={`/${p.campus}/x/handoffs`} className="rounded-full bg-[#16120f] px-3 py-1.5 text-sm font-bold text-sticker">
+              Set up pickup →
+            </Link>
           </div>
         ) : null}
 

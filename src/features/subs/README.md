@@ -1,7 +1,5 @@
 # subs
 
-Owner: **dev-b** · branch: `feature/subs` · registry id: `subs`
+Owner: **dev-b** · route `x/subs` · status: live
 
-Subscription splitting. New tables go in `src/data/schema` with a `campus_id` column; add methods to a new repository interface rather than `MarketRepository`.
-
-To ship: build here, add `src/app/[campus]/(app)/x/subs/page.tsx`, then set `status: "live"` in `src/config/features.ts`.
+Subscription splitting. Organizer posts a plan (service, price, cycle, open seats); Dibs computes an even share including the organizer. Members join (seat-limited, transactional), mark payment sent; organizer confirms received. Shared board UI: `features/community/CommunityBoard.tsx`. Data: `community_posts` / `community_members` (kind `sub`).

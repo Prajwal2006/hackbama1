@@ -1,23 +1,25 @@
 "use client";
 
 import { FlaskConical, RotateCcw } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { resetDemoAction } from "@/features/demo/actions";
 
 /** Always-visible indicator that data and verification are simulated. */
-export function DemoBanner({ dataMode, authMode }: { dataMode: "mock" | "neon"; authMode: "mock" | "authjs" }) {
+export function DemoBanner({ dataMode, emailDelivery, canReset }: { dataMode: "mock" | "neon"; emailDelivery: "email" | "screen"; canReset: boolean }) {
   const [pending, start] = useTransition();
   const router = useRouter();
-  const parts = [dataMode === "mock" && "in-memory data", authMode === "mock" && "simulated verification"].filter(Boolean);
+  const parts = [dataMode === "mock" && "in-memory data", emailDelivery === "screen" && "sign-in codes shown on screen"].filter(Boolean);
   return (
     <div className="flex items-center justify-center gap-2 border-b border-line bg-sticker px-safe py-1.5 text-[0.78rem] font-semibold text-[#16120f]">
       <FlaskConical className="size-3.5 shrink-0" />
       <span className="truncate">
-        Demo mode — {parts.join(" + ")}. Actions are real in this sandbox, not on campus.
+        Demo mode — {parts.join(" + ")}; actions are real in this sandbox.
       </span>
-      {dataMode === "mock" ? (
+      <Link href="/demo" className="ml-1 hidden shrink-0 underline underline-offset-2 sm:inline">Guided tour</Link>
+      {canReset ? (
         <button
           type="button"
           disabled={pending}

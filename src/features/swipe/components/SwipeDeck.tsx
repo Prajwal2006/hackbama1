@@ -42,7 +42,7 @@ export function SwipeDeck({ campus, cards, signedIn }: { campus: string; cards: 
   const top = deck[0];
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center">
+    <div className="mx-auto flex max-w-sm flex-col items-center" data-tour="swipe">
       <Stack
         className="aspect-[3/4] h-[min(52dvh,30rem)] max-w-full"
         items={deck.map((c) => ({

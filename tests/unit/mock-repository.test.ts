@@ -4,7 +4,7 @@ import { createMockRepository, resetMockStore } from "@/data/adapters/mock";
 const repo = createMockRepository();
 const uaBuyer = { userId: "usr_ua_demo", campusId: "ua" };
 const uaOther = { userId: "usr_ua_ana", campusId: "ua" };
-const rbStudent = { userId: "usr_rb_demo", campusId: "demo" };
+const rbStudent = { userId: "usr_rb_demo", campusId: "riverbend" };
 
 beforeEach(() => resetMockStore(new Date()));
 
@@ -90,7 +90,7 @@ describe("bids", () => {
 describe("listing ownership", () => {
   it("only the seller can change a listing, and only on its campus", async () => {
     expect(await repo.setListingStatus(uaBuyer, "lst_ua_rug", "cancelled")).toMatchObject({ code: "forbidden" });
-    expect(await repo.setListingStatus({ userId: "usr_ua_priya", campusId: "demo" }, "lst_ua_rug", "cancelled")).toMatchObject({ code: "not_found" });
+    expect(await repo.setListingStatus({ userId: "usr_ua_priya", campusId: "riverbend" }, "lst_ua_rug", "cancelled")).toMatchObject({ code: "not_found" });
     expect((await repo.setListingStatus({ userId: "usr_ua_priya", campusId: "ua" }, "lst_ua_rug", "cancelled")).ok).toBe(true);
   });
   it("auctions with bids can't be cancelled", async () => {

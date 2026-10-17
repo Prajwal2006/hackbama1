@@ -9,7 +9,7 @@ const now = new Date("2026-10-17T12:00:00Z");
 const auction = (over: Partial<Listing["auction"]> = {}): Listing => ({
   id: "l1", campusId: "ua", sellerId: "seller", title: "Fridge", description: "", category: "fridge", condition: "good",
   saleMode: "auction", priceCents: 4000, isFree: false, currency: "USD", imageUrls: [], status: "active",
-  pickupMode: "now", handoffStart: null, handoffEnd: null, locationHint: null, pickupSpotId: null, artSeed: 1,
+  pickupMode: "now", handoffStart: null, handoffEnd: null, locationHint: null, pickupSpotId: null, holdForMoveIn: false, artSeed: 1,
   auction: {
     startingBidCents: 4000, minimumIncrementCents: 500, auctionStartsAt: new Date(now.getTime() - 3600e3),
     auctionEndsAt: new Date(now.getTime() + 3600e3 * 5), reservePriceCents: null, buyNowPriceCents: 15000,
@@ -44,7 +44,7 @@ describe("bidding rules", () => {
   it("blocks sellers, closed auctions, other campuses", () => {
     const l = auction();
     expect(checkBid({ listing: l, actor: { userId: "seller", campusId: "ua" }, amountCents: 9000, highest: null, now })).toMatchObject({ ok: false, code: "own_listing" });
-    expect(checkBid({ listing: l, actor: { userId: "z", campusId: "demo" }, amountCents: 9000, highest: null, now })).toMatchObject({ ok: false, code: "forbidden" });
+    expect(checkBid({ listing: l, actor: { userId: "z", campusId: "riverbend" }, amountCents: 9000, highest: null, now })).toMatchObject({ ok: false, code: "forbidden" });
     const ended = auction({ auctionEndsAt: new Date(now.getTime() - 1) });
     expect(checkBid({ listing: ended, actor, amountCents: 9000, highest: null, now })).toMatchObject({ ok: false, code: "auction_ended" });
     const notYet = auction({ auctionStartsAt: new Date(now.getTime() + 1000) });
@@ -89,10 +89,10 @@ describe("listing validation", () => {
 
 describe("cross-campus policy", () => {
   it("only explicit partners can discover; nobody transacts cross-campus by default", () => {
-    expect(canViewCampus("demo", "ua", "demo")).toBe(true); // UA lists demo as discoverableBy
-    expect(canViewCampus(null, "ua", "demo")).toBe(false);
-    expect(canTransact({ userId: "x", campusId: "demo" }, "ua")).toBe(false);
-    expect(visibleCampusIds({ browsingCampusId: "ua", viewerCampusId: "ua", includeNearby: true })).toEqual(["ua", "demo"]);
+    expect(canViewCampus("riverbend", "ua", "riverbend")).toBe(true); // UA lists riverbend as discoverableBy
+    expect(canViewCampus(null, "ua", "riverbend")).toBe(false);
+    expect(canTransact({ userId: "x", campusId: "riverbend" }, "ua")).toBe(false);
+    expect(visibleCampusIds({ browsingCampusId: "ua", viewerCampusId: "ua", includeNearby: true })).toEqual(["ua", "riverbend"]);
     expect(visibleCampusIds({ browsingCampusId: "ua", viewerCampusId: null, includeNearby: true })).toEqual(["ua"]);
   });
 });

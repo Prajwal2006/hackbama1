@@ -114,6 +114,8 @@ export type Listing = {
   handoffEnd: Date | null;
   locationHint: string | null;
   pickupSpotId: string | null;
+  /** Seller can keep it until the next move-in window. */
+  holdForMoveIn: boolean;
   /** Deterministic hue used by generated illustrations. */
   artSeed: number;
   auction: AuctionFields | null;

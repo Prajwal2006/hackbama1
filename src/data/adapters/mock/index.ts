@@ -17,6 +17,9 @@ import {
   statusesAfterNewHigh,
 } from "@/features/auctions/domain";
 import { checkClaim, dibsExpiry, isExpired } from "@/features/dibs/domain";
+import { checkHandoffAck, checkSchedule } from "@/features/community/domain";
+import { getCampus } from "@/config/campuses";
+import type { Handoff, HandoffView } from "../../community-types";
 import { validateAuctionTiming, type NewListingInput } from "@/features/listings/schema";
 import { canTransact, canViewCampus } from "@/lib/policy";
 import { formatCents } from "@/lib/money";
@@ -24,9 +27,13 @@ import { buildSeed, type SeedData } from "../../seed";
 import { fail, ok, type Actor, type MarketRepository, type PlaceBidInput, type Result } from "../../repository";
 import type { Bid, Dib, Listing, ListingFilter, ListingStatus, ListingView, Notification, NotificationKind } from "../../types";
 
-type Store = SeedData & { bootedAt: Date };
+export type Store = SeedData & { bootedAt: Date };
 
 const g = globalThis as unknown as { __dibsMockStore?: Store };
+
+export function mockStore(): Store {
+  return store();
+}
 
 function store(): Store {
   if (!g.__dibsMockStore) g.__dibsMockStore = { ...buildSeed(new Date()), bootedAt: new Date() };
@@ -76,6 +83,49 @@ function notify(
   s.notifications.push(row);
 }
 
+function newHandoff(
+  s: Store,
+  l: Listing,
+  buyerId: string,
+  source: Handoff["source"],
+  amountCents: number,
+  dibId: string | null,
+  now: Date,
+) {
+  const h: Handoff = {
+    id: id("ho"), campusId: l.campusId, listingId: l.id, sellerId: l.sellerId, buyerId, source, dibId, amountCents,
+    phase: "move_out", scheduledAt: null, status: "pending", completedAt: null,
+    paymentMethod: null, paymentSentAt: null, paymentReceivedAt: null, createdAt: now, updatedAt: now,
+  };
+  s.handoffs.push(h);
+  return h;
+}
+
+function cancelHandoffForDib(s: Store, dibId: string, now: Date) {
+  const h = s.handoffs.find((x) => x.dibId === dibId && x.status === "pending");
+  if (h) {
+    h.status = "cancelled";
+    h.updatedAt = now;
+  }
+}
+
+function handoffView(s: Store, h: Handoff, viewerId: string): HandoffView {
+  const l = s.listings.find((x) => x.id === h.listingId);
+  const name = (uid: string) => s.profiles.find((p) => p.id === uid)?.displayName ?? "Student";
+  return {
+    ...h,
+    listingTitle: l?.title ?? "Item",
+    listingImage: l?.imageUrls[0] ?? null,
+    listingCategory: l?.category ?? "other",
+    listingArtSeed: l?.artSeed ?? 0,
+    pickupSpotId: l?.pickupSpotId ?? null,
+    holdForMoveIn: l?.holdForMoveIn ?? false,
+    sellerName: name(h.sellerId),
+    buyerName: name(h.buyerId),
+    role: h.buyerId === viewerId ? "buyer" : "seller",
+  };
+}
+
 function activeDib(s: Store, listingId: string): Dib | null {
   return s.dibs.find((d) => d.listingId === listingId && d.status === "active") ?? null;
 }
@@ -99,6 +149,7 @@ function settleSync(s: Store, l: Listing, now: Date): boolean {
   l.updatedAt = now;
   const price = result.winningBid ? formatCents(result.winningBid.amountCents) : null;
   if (result.winningBid) {
+    newHandoff(s, l, result.winningBid.bidderId, "auction", result.winningBid.amountCents, null, now);
     notify(s, {
       campusId: l.campusId, userId: result.winningBid.bidderId, kind: "auction_won", listingId: l.id,
       title: "You won! 🎉", body: `${l.title} is yours for ${price}. Message the seller to set up pickup.`,
@@ -132,6 +183,7 @@ function maintenanceSync(s: Store, now: Date) {
     if (!isExpired(d, now)) continue;
     d.status = "expired";
     d.updatedAt = now;
+    cancelHandoffForDib(s, d.id, now);
     const l = s.listings.find((x) => x.id === d.listingId);
     if (l && l.status === "reserved") {
       l.status = "active";
@@ -252,6 +304,7 @@ export function createMockRepository(): MarketRepository {
         handoffEnd: input.handoffEnd,
         locationHint: input.locationHint,
         pickupSpotId: input.pickupSpotId,
+        holdForMoveIn: input.holdForMoveIn,
         artSeed: input.artSeed ?? Math.floor(Math.random() * 360),
         auction:
           input.saleMode === "auction" && a
@@ -277,6 +330,7 @@ export function createMockRepository(): MarketRepository {
         if (d) {
           d.status = "cancelled";
           d.updatedAt = now();
+          cancelHandoffForDib(s, d.id, now());
         }
       } else if (status === "active") {
         if (l.status !== "cancelled" && l.status !== "reserved") return fail("invalid", "Only cancelled or reserved items can be relisted.");
@@ -285,6 +339,7 @@ export function createMockRepository(): MarketRepository {
         if (d) {
           d.status = "cancelled";
           d.updatedAt = now();
+          cancelHandoffForDib(s, d.id, now());
         }
       } else if (status === "sold") {
         if (l.saleMode === "auction") return fail("invalid", "Auctions are marked sold by settlement.");
@@ -397,6 +452,7 @@ export function createMockRepository(): MarketRepository {
       l.priceCents = bid.amountCents;
       l.auction = { ...l.auction!, settledAt: t, outcome: "bought_now", winningBidId: bid.id };
       l.updatedAt = t;
+      newHandoff(s, l, actor.userId, "auction", bid.amountCents, null, t);
       notify(s, {
         campusId: l.campusId, userId: actor.userId, kind: "auction_won", listingId: l.id,
         title: "Bought it! 🎉", body: `${l.title} is yours for ${formatCents(bid.amountCents)}.`,
@@ -427,6 +483,7 @@ export function createMockRepository(): MarketRepository {
         status: "active", expiresAt: dibsExpiry(l.campusId, t), createdAt: t, updatedAt: t,
       };
       s.dibs.push(dib);
+      newHandoff(s, l, actor.userId, "dibs", l.isFree ? 0 : l.priceCents, dib.id, t);
       l.status = "reserved";
       l.updatedAt = t;
       notify(s, {
@@ -449,6 +506,7 @@ export function createMockRepository(): MarketRepository {
       if (d.status !== "active") return fail("unavailable", "This reservation is no longer active.");
       d.status = "cancelled";
       d.updatedAt = now();
+      cancelHandoffForDib(s, d.id, now());
       if (l && l.status === "reserved") l.status = "active";
       return ok(clone(d));
     },
@@ -460,6 +518,14 @@ export function createMockRepository(): MarketRepository {
       const l = s.listings.find((x) => x.id === d.listingId);
       if (l?.sellerId !== actor.userId) return fail("forbidden", "Only the seller can confirm a handoff.");
       if (d.status !== "active") return fail("unavailable", "This reservation is no longer active.");
+      const h = s.handoffs.find((x) => x.dibId === d.id && x.status === "pending");
+      if (h) {
+        const check = checkHandoffAck(h, actor, "complete");
+        if (!check.ok) return check;
+        h.status = "completed";
+        h.completedAt = now();
+        h.updatedAt = now();
+      }
       d.status = "completed";
       d.updatedAt = now();
       if (l) l.status = "sold";
@@ -498,6 +564,98 @@ export function createMockRepository(): MarketRepository {
     async getActiveDibForListing(listingId) {
       maintain();
       return clone(activeDib(store(), listingId));
+    },
+
+    async listHandoffs(actor) {
+      maintain();
+      const s = store();
+      return clone(
+        s.handoffs
+          .filter((h) => h.campusId === actor.campusId && (h.buyerId === actor.userId || h.sellerId === actor.userId) && h.status !== "cancelled")
+          .sort((a, b) => (a.scheduledAt?.getTime() ?? Infinity) - (b.scheduledAt?.getTime() ?? Infinity) || b.createdAt.getTime() - a.createdAt.getTime())
+          .map((h) => handoffView(s, h, actor.userId)),
+      );
+    },
+
+    async getOpenHandoffForListing(listingId) {
+      return clone(store().handoffs.find((h) => h.listingId === listingId && h.status === "pending") ?? null);
+    },
+
+    async scheduleHandoff(actor, handoffId, phase, at) {
+      const s = store();
+      const h = s.handoffs.find((x) => x.id === handoffId);
+      if (!h) return fail("not_found", "Handoff not found.");
+      const check = checkHandoffAck(h, actor, "schedule");
+      if (!check.ok) return check;
+      const l = s.listings.find((x) => x.id === h.listingId);
+      const campus = getCampus(h.campusId)!;
+      const t = now();
+      const when = checkSchedule({ phase, at, now: t, moveInDate: campus.moveInDate, holdForMoveIn: !!l?.holdForMoveIn });
+      if (!when.ok) return when;
+      h.phase = phase;
+      h.scheduledAt = at;
+      h.updatedAt = t;
+      // A scheduled pickup keeps the reservation alive until a few hours after it.
+      const d = h.dibId ? s.dibs.find((x) => x.id === h.dibId && x.status === "active") : null;
+      if (d) d.expiresAt = new Date(Math.max(d.expiresAt.getTime(), at.getTime() + 6 * 3_600_000));
+      const other = actor.userId === h.buyerId ? h.sellerId : h.buyerId;
+      notify(s, {
+        campusId: h.campusId, userId: other, kind: "dibs_confirmed", listingId: h.listingId,
+        title: phase === "move_in" ? "Move-in pickup scheduled" : "Pickup scheduled",
+        body: `${l?.title ?? "Item"}: ${at.toLocaleString("en-US", { timeZone: campus.timezone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`,
+      }, t);
+      return ok(clone(h));
+    },
+
+    async ackHandoff(actor, handoffId, what, method) {
+      const s = store();
+      const h = s.handoffs.find((x) => x.id === handoffId);
+      if (!h) return fail("not_found", "Handoff not found.");
+      const check = checkHandoffAck(h, actor, what);
+      if (!check.ok) return check;
+      const t = now();
+      if (what === "sent") {
+        h.paymentSentAt = t;
+        h.paymentMethod = method ?? h.paymentMethod;
+      } else {
+        h.paymentReceivedAt = t;
+        h.paymentMethod = h.paymentMethod ?? method;
+      }
+      h.updatedAt = t;
+      const l = s.listings.find((x) => x.id === h.listingId);
+      notify(s, {
+        campusId: h.campusId, userId: what === "sent" ? h.sellerId : h.buyerId, kind: "dibs_confirmed", listingId: h.listingId,
+        title: what === "sent" ? "Payment sent" : "Payment received",
+        body: `${formatCents(h.amountCents)} for ${l?.title ?? "an item"}${h.paymentMethod ? ` via ${h.paymentMethod}` : ""}.`,
+      }, t);
+      return ok(clone(h));
+    },
+
+    async completeHandoff(actor, handoffId) {
+      const s = store();
+      const h = s.handoffs.find((x) => x.id === handoffId);
+      if (!h) return fail("not_found", "Handoff not found.");
+      const check = checkHandoffAck(h, actor, "complete");
+      if (!check.ok) return check;
+      const t = now();
+      h.status = "completed";
+      h.completedAt = t;
+      h.updatedAt = t;
+      const d = h.dibId ? s.dibs.find((x) => x.id === h.dibId) : null;
+      if (d && d.status === "active") {
+        d.status = "completed";
+        d.updatedAt = t;
+      }
+      const l = s.listings.find((x) => x.id === h.listingId);
+      if (l) {
+        l.status = "sold";
+        l.updatedAt = t;
+      }
+      notify(s, {
+        campusId: h.campusId, userId: h.buyerId, kind: "dibs_confirmed", listingId: h.listingId,
+        title: "Handoff complete", body: `${l?.title ?? "Item"} is officially yours. Enjoy!`,
+      }, t);
+      return ok(clone(h));
     },
 
     async toggleSave(actor, listingId) {
@@ -574,6 +732,10 @@ export function createMockRepository(): MarketRepository {
 
     async runMaintenance(at) {
       return maintenanceSync(store(), at ?? now());
+    },
+
+    async demoEndAuction(listingId) {
+      return mockEndAuctionNow(listingId);
     },
 
     async settleAuction(listingId, at) {

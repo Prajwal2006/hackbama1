@@ -1,7 +1,5 @@
 # class-swap
 
-Owner: **dev-b** · branch: `feature/class-swap` · registry id: `class-swap`
+Owner: **dev-a** · route `x/class-swap` · status: live
 
-Class section swapping. Campus-scoped matching; keep matching logic pure and unit-tested.
-
-To ship: build here, add `src/app/[campus]/(app)/x/class-swap/page.tsx`, then set `status: "live"` in `src/config/features.ts`.
+Students post course + section they have + section they want. `findSwapCycle` (pure, `features/community/domain.ts`) searches for the shortest 2–4 person loop; a `SwapCycle` is proposed and each person confirms (or opts into auto-accept). When everyone confirms, a coordinated drop/add window is set and the UI shows who drops what and who adds it. Data: `swap_requests`, `swap_cycles`. Neon matching takes a per-course advisory lock.
