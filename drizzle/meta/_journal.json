@@ -15,6 +15,13 @@
       "when": 1792264443182,
       "tag": "0001_warm_molten_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792266736891,
+      "tag": "0002_bitter_mister_fear",
+      "breakpoints": true
     }
   ]
 }

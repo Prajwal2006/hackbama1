@@ -2,7 +2,7 @@
 
 A campus-verified student marketplace built around the semester cycle. Students moving out sell, auction or give away dorm gear; students moving in call dibs or bid — then the same verified community splits subscriptions, shares rides, trades home-cooked food and swaps class sections. Built for HackBama at The University of Alabama.
 
-**Judges: open [`/demo`](http://localhost:3000/demo)** — a guided, 16-stop tour of every feature in about 4½ minutes, with a spotlight on each part and a timer against a 5-minute budget.
+**Judges: open [`/demo`](http://localhost:3000/demo)** — a guided, 18-stop tour of every feature in under 5 minutes, with a spotlight on each part and a timer against a 5-minute budget.
 
 ## What's in it
 
@@ -10,6 +10,7 @@ A campus-verified student marketplace built around the semester cycle. Students 
 | --- | --- |
 | Marketplace | Fixed price, **auctions** (increments, reserve, buy-now, idempotent settlement) and **free** items. Call dibs → 24h hold with the DIBS! stamp. Search/filter/sort in the URL, saves, real photos. |
 | Handoffs (`/ua/x/handoffs`) | Every dibs and auction win becomes a handoff. Schedule it during **move-out**, or — if the seller can hold it — at **move-in**. Payment happens in any app; buyer marks *sent*, seller marks *received*, seller marks *handed off*. |
+| Furniture Bank (`/ua/x/bank`) | "Furniture futures": deposit furniture on consignment at move-out (inventory ID + shelf), build a dorm from real stored inventory on a budget, reserve it for fall move-in, and fast-forward it through *sold in May → stored over summer → delivered in August → back in circulation*. Storage and delivery are simulated. |
 | Swipe (`/ua/x/swipe`) | Tinder-style discovery of random dorm stuff; right = save. |
 | Split subs (`/ua/x/subs`) | Fill open seats on family plans; even split including the organizer; payment acknowledged both ways. |
 | Rides & trips (`/ua/x/rides`) | Carpools at move-out and split-cost break trips; seats can't be oversold. |
