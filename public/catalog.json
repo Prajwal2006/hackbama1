@@ -85,5 +85,18 @@
     "placement": "floor",
     "description": "An ergonomic black drafting stool with armrests, a circular chrome footring, and a 5-star mobile base.",
     "scanned": true
+  },
+  {
+    "id": "scan-plastic-water-bottle-232f",
+    "name": "Plastic Water Bottle",
+    "model": "/models/scan-plastic-water-bottle-232f.glb",
+    "dimensionsCm": {
+      "w": 6,
+      "d": 6,
+      "h": 20
+    },
+    "placement": "floor",
+    "description": "A standard clear plastic water bottle with a white cap.",
+    "scanned": true
   }
 ]

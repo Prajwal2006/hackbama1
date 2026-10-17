@@ -67,6 +67,7 @@ function readJson(req, limit = 25 * 1024 * 1024) {
 const clampDim = (v) => Math.max(5, Math.min(400, Number(v) || 50));
 
 export default function scanPlugin(env) {
+  const cooldown = new Map(); // model -> time until which it is skipped after a 429
   const hits = new Map(); // ip -> timestamps, tiny rate limit
   const limited = (ip) => {
     const now = Date.now();
@@ -84,25 +85,34 @@ export default function scanPlugin(env) {
     const call = (model, thinking) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      signal: AbortSignal.timeout(40_000),
       body: JSON.stringify({
         contents: [{ parts }],
         generationConfig: { responseMimeType: 'application/json', responseSchema: SCHEMA, temperature: 0.4, ...(thinking ? { thinkingConfig: { thinkingLevel: env.GEMINI_THINKING || 'low' } } : {}) },
       }),
     });
-    // Gemini sometimes reports temporary high demand (503/429): retry, then fall back to a second model.
-    const models = [env.GEMINI_MODEL || 'gemini-3.5-flash', env.GEMINI_FALLBACK_MODEL || 'gemini-3.1-flash-lite'];
+    // 429 = this model's quota is used up (retrying won't help): skip it for a minute and use the other model.
+    // 503 = temporary high demand: retry once. Each call is capped so a slow model can't hang the phone.
+    // Tried in order; set GEMINI_MODELS (comma separated) in .env to change.
+    const models = (env.GEMINI_MODELS || 'gemini-3.5-flash,gemini-3-flash-preview,gemini-3.5-flash-lite,gemini-3.1-flash-lite').split(',').map((m) => m.trim()).filter(Boolean);
+    const started = Date.now();
     let res;
     for (const [mi, model] of models.entries()) {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        res = await call(model, mi === 0);
-        if (res.status !== 503 && res.status !== 429) break;
-        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      const last = mi === models.length - 1;
+      if (!last && (cooldown.get(model) || 0) > Date.now()) continue;
+      if (Date.now() - started > 60_000) break; // stay under the tunnel's request time limit
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try { res = await call(model, mi === 0); } catch (e) { console.warn(`[scan] ${model} timed out`); res = null; break; }
+        if (res.status !== 503) break;
+        await new Promise((r) => setTimeout(r, 1500));
       }
-      if (res.ok) break;
-      console.warn(`[scan] ${model} failed with ${res.status}${mi === 0 ? ', trying fallback model' : ''}`);
+      if (res?.ok) break;
+      if (res?.status === 429) cooldown.set(model, Date.now() + 60_000);
+      console.warn(`[scan] ${model} failed with ${res?.status ?? 'timeout'}${last ? '' : ', trying next model'}`);
     }
+    if (!res) throw Object.assign(new Error('Gemini took too long. Please try again.'), { status: 504 });
     const data = await res.json();
-    if (!res.ok) throw Object.assign(new Error(`Gemini error: ${data?.error?.message || res.status}`), { status: 502 });
+    if (!res.ok) throw Object.assign(new Error(res.status === 429 ? 'Gemini rate limit reached. Wait about a minute and try again.' : `Gemini error: ${data?.error?.message || res.status}`), { status: res.status === 429 ? 429 : 502 });
     const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ?? '';
     if (!text) throw Object.assign(new Error('Gemini returned no content (the photo may have been blocked)'), { status: 502 });
     return JSON.parse(text);
