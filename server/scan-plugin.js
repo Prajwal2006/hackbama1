@@ -2,37 +2,57 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { specToGlb } from './spec-to-glb.js';
+import { EXAMPLES } from './examples.js';
 
 const PROMPT = `You are a 3D furniture modeler. The attached photo(s) show ONE piece of furniture or home item from different angles.
 Describe it as a simple 3D model made of primitive parts so it can be built in code.
 
 Coordinate system (centimeters): origin is the center of the item's footprint on the floor.
 x = left/right, y = up (floor is y=0), z = front/back. Each part's (x, y, z) is the CENTER OF ITS BOTTOM FACE.
-Shapes: "box" uses w (x-size), d (z-size), h (y-size). "cylinder" uses radiusTop, radiusBottom (different values make a cone/tapered shape) and h.
-Use 6-25 parts: model EVERY visible component (e.g. a desk = top + 4 legs + drawers/shelves; a chair = seat + 4 legs + backrest). Fill in EVERY field of every part: for a box set radiusTop and radiusBottom to 0; for a cylinder set w and d to 2x its radius. Never leave a size at 0 or null. Get proportions, part positions and colors right (hex colors sampled from the photo). Legs must touch y=0; stacked parts must touch, not float or overlap wildly.
-Set glow=true for lit parts (lamp shades, screens), metallic=true for metal/mirror surfaces.
-Also give a short friendly name, a one-sentence description, and the realistic real-world overall size in cm (w=width, d=depth, h=height) based on what this kind of item usually measures.`;
+Shapes:
+- "box": uses w (x-size), d (z-size), h (y-size) and bevelCm (edge rounding, 0.3-2 for furniture; 0 for sharp edges).
+- "cylinder": uses radiusTop, radiusBottom (different values make a cone/tapered shape) and h; set w and d to 2x the larger radius.
+- "sphere": an ellipsoid of size w, d, h.
+rotationX/Y/Z (degrees) tilt a part around its own center, e.g. a leaning mirror or an angled backrest. Use 0 when upright.
+material: wood, fabric, plastic, ceramic, metal or glass (glass = mirrors/reflective panels). color: hex sampled from the photo. glow=true for lit parts (lamp shades, screens).
+mirror: "x", "z" or "xz" duplicates the part across the item's center plane(s). Use it for symmetric pairs/quads (legs, armrests, drawer handles): describe ONE part at its real position and set mirror, instead of listing each copy. Use "none" when the part is not repeated.
+
+Rules:
+- Model EVERY visible component with 6-30 parts, e.g. a desk = top + drawers/shelves + legs; a sofa = base + seat cushions + back + armrests + feet.
+- Fill in EVERY field of every part. Never leave a size at 0 or null (for a box set radiusTop and radiusBottom to 0).
+- Parts that rest on the floor must start at y=0. Stacked parts must touch (the bottom of the upper part equals the top of the lower part), neither floating nor deeply overlapping.
+- Get proportions right: measure each part relative to the whole item.
+- In "reasoning", write 2-4 sentences first: list the components, their rough proportions and which ones repeat symmetrically.
+- Give a short friendly name, a one-sentence description, and the realistic real-world overall size in cm (w=width, d=depth, h=height) for this kind of item.
+
+Here are three correct examples of the exact JSON format, for different items (do not copy them, model what is in the photos):
+${EXAMPLES.map((e) => JSON.stringify(e)).join('\n')}`;
 
 const PART = {
   type: 'OBJECT',
   properties: {
-    shape: { type: 'STRING', enum: ['box', 'cylinder'] },
+    shape: { type: 'STRING', enum: ['box', 'cylinder', 'sphere'] },
     x: { type: 'NUMBER' }, y: { type: 'NUMBER' }, z: { type: 'NUMBER' },
     w: { type: 'NUMBER' }, d: { type: 'NUMBER' }, h: { type: 'NUMBER' },
     radiusTop: { type: 'NUMBER' }, radiusBottom: { type: 'NUMBER' },
-    rotationY: { type: 'NUMBER' }, color: { type: 'STRING' },
-    glow: { type: 'BOOLEAN' }, metallic: { type: 'BOOLEAN' },
+    rotationX: { type: 'NUMBER' }, rotationY: { type: 'NUMBER' }, rotationZ: { type: 'NUMBER' },
+    bevelCm: { type: 'NUMBER' },
+    material: { type: 'STRING', enum: ['wood', 'fabric', 'plastic', 'ceramic', 'metal', 'glass'] },
+    color: { type: 'STRING' }, glow: { type: 'BOOLEAN' },
+    mirror: { type: 'STRING', enum: ['none', 'x', 'z', 'xz'] },
   },
-  required: ['shape', 'x', 'y', 'z', 'w', 'd', 'h', 'radiusTop', 'radiusBottom', 'rotationY', 'color', 'glow', 'metallic'],
+  required: ['shape', 'x', 'y', 'z', 'w', 'd', 'h', 'radiusTop', 'radiusBottom', 'rotationX', 'rotationY', 'rotationZ', 'bevelCm', 'material', 'color', 'glow', 'mirror'],
 };
 const SCHEMA = {
   type: 'OBJECT',
   properties: {
+    reasoning: { type: 'STRING' },
     name: { type: 'STRING' }, description: { type: 'STRING' },
     dimensionsCm: { type: 'OBJECT', properties: { w: { type: 'NUMBER' }, d: { type: 'NUMBER' }, h: { type: 'NUMBER' } }, required: ['w', 'd', 'h'] },
     parts: { type: 'ARRAY', items: PART },
   },
-  required: ['name', 'description', 'dimensionsCm', 'parts'],
+  propertyOrdering: ['reasoning', 'name', 'description', 'dimensionsCm', 'parts'],
+  required: ['reasoning', 'name', 'description', 'dimensionsCm', 'parts'],
 };
 
 function readJson(req, limit = 25 * 1024 * 1024) {
