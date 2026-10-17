@@ -18,6 +18,8 @@ import {
 import { formatCents, parseDollarsToCents } from "@/lib/money";
 import { formatRemaining } from "@/lib/time";
 import { cn } from "@/lib/utils";
+import { ArScanner } from "@/features/ar/components/ArScanner";
+import type { ArModelInput } from "@/features/ar/spec";
 import { createListingAction } from "../actions";
 import { resizeImage } from "../image-resize";
 
@@ -85,10 +87,13 @@ function localInput(d: Date) {
   return new Date(d.getTime() - off).toISOString().slice(0, 16);
 }
 
-export function CreateListingForm({ campus, spots, seed }: { campus: string; spots: PickupSpot[]; seed: number }) {
+export function CreateListingForm({
+  campus, spots, seed, arEnabled = false,
+}: { campus: string; spots: PickupSpot[]; seed: number; arEnabled?: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [images, setImages] = useState<string[]>([]);
+  const [arModel, setArModel] = useState<ArModelInput | null>(null);
   const [pending, start] = useTransition();
   const [openedAt] = useState(() => Date.now());
 
@@ -102,7 +107,7 @@ export function CreateListingForm({ campus, spots, seed }: { campus: string; spo
       handoffStart: "", handoffEnd: "", locationHint: "", holdForMoveIn: false,
     },
   });
-  const { register, formState: { errors }, setValue, trigger, handleSubmit, control } = form;
+  const { register, formState: { errors }, setValue, getValues, trigger, handleSubmit, control } = form;
   const v = useWatch({ control });
   const mode = (v.saleMode ?? "fixed") as SaleMode;
 
@@ -145,6 +150,7 @@ export function CreateListingForm({ campus, spots, seed }: { campus: string; spo
               }
             : null,
         imageUrls: images,
+        arModel,
         pickupMode: d.pickupMode,
         handoffStart: d.handoffStart ? (new Date(d.handoffStart).toISOString() as unknown as Date) : null,
         handoffEnd: d.handoffEnd ? (new Date(d.handoffEnd).toISOString() as unknown as Date) : null,
@@ -243,6 +249,17 @@ export function CreateListingForm({ campus, spots, seed }: { campus: string; spo
                     ) : null}
                   </div>
                 </div>
+                <ArScanner
+                  campus={campus}
+                  images={images}
+                  enabled={arEnabled}
+                  value={arModel}
+                  onChange={setArModel}
+                  onSuggest={(s) => {
+                    if (!getValues("title").trim()) setValue("title", s.name, { shouldValidate: true });
+                    if (!getValues("description").trim()) setValue("description", s.description);
+                  }}
+                />
                 <div>
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" placeholder="Size, quirks, what's included…" {...register("description")} />
@@ -366,7 +383,7 @@ export function CreateListingForm({ campus, spots, seed }: { campus: string; spo
                     `Auction from ${previewPrice}, +${formatCents(parseDollarsToCents(v.increment ?? "") ?? 0)} per bid, ends in ${formatRemaining(endsIn)}.`}
                 </p>
                 <p className="mt-2">{PICKUP_LABEL[v.pickupMode ?? "flexible"]} at {spots.find((s) => s.id === v.pickupSpotId)?.name ?? "campus"}.</p>
-                <p className="mt-2">{images.length ? `${images.length} photo(s)` : "No photos — we'll use an illustration."}</p>
+                <p className="mt-2">{images.length ? `${images.length} photo(s)` : "No photos — we'll use an illustration."}{arModel ? " Buyers can place it in their room (AR)." : ""}</p>
               </div>
             ) : null}
           </motion.div>

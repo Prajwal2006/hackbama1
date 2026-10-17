@@ -1,5 +1,8 @@
 import "server-only";
 import { dataMode, env } from "@/lib/env";
+import type { ArRepository } from "./ar-repository";
+import { createMockArRepository } from "./adapters/mock/ar";
+import { createNeonArRepository } from "./adapters/neon/ar";
 import type { AuthStore } from "./auth-store";
 import type { CommunityRepository } from "./community-repository";
 import { createMockCommunityRepository } from "./adapters/mock/community";
@@ -13,6 +16,7 @@ import { createNeonAuthStore } from "./adapters/neon/auth";
 let repo: MarketRepository | undefined;
 let auth: AuthStore | undefined;
 let community: CommunityRepository | undefined;
+let ar: ArRepository | undefined;
 
 /** The single entry point to marketplace data. Picks the adapter from the environment. */
 export function getRepo(): MarketRepository {
@@ -30,6 +34,12 @@ export function getAuthStore(): AuthStore {
 export function getCommunity(): CommunityRepository {
   community ??= dataMode === "neon" ? createNeonCommunityRepository(env.databaseUrl) : createMockCommunityRepository();
   return community;
+}
+
+/** AR (3D) models attached to listings. */
+export function getAr(): ArRepository {
+  ar ??= dataMode === "neon" ? createNeonArRepository(env.databaseUrl) : createMockArRepository();
+  return ar;
 }
 
 export type { MarketRepository, Actor, Result } from "./repository";

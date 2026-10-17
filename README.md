@@ -61,6 +61,8 @@ Put these in `.env.local` (and in Vercel project settings). All are optional.
 | `RESEND_API_KEY`, `EMAIL_FROM` | Email delivery for sign-in codes. Without a key, codes appear on screen. |
 | `DIBS_ALLOW_DEMO_RESET=1` | Lets `/demo` and the banner **wipe and reseed a Neon database**, and enables "end auction now". Only for a dedicated demo database. |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob for uploaded listing photos. Without it, uploads stay in memory (demo). |
+| `GEMINI_API_KEY` | Turns on **photo → 3D model (AR)** for sellers (Google AI Studio key, server-side only). Without it the sell form hides the 3D step; seeded demo listings still have AR. |
+| `GEMINI_MODELS` | Optional comma-separated fallback chain, best first (default `gemini-3.5-flash,gemini-3-flash-preview,gemini-3.5-flash-lite,gemini-3.1-flash-lite`). |
 | `CRON_SECRET` | Protects `/api/cron/maintenance`. |
 | `NEXT_PUBLIC_SITE_URL` | Absolute URL for metadata. |
 | `DIBS_FORCE_MOCK=1` | Force the in-memory adapter even if `DATABASE_URL` is set. |

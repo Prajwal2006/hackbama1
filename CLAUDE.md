@@ -32,6 +32,7 @@ src/data/community-repository.ts  CommunityRepository (subs/rides/meals posts, c
 src/data/auth-store.ts        email codes + user identities
 src/data/adapters/{mock,neon} the two implementations; src/data/index.ts picks one from env
 src/data/schema/              Drizzle schema (core.ts, community.ts) → drizzle/ migrations
+src/features/ar/              photo → 3D model (Gemini) and the buyer AR viewer; see its README
 src/features/<id>/            each feature owns components, actions, domain rules, README
 src/components/{ui,shell,reactbits,three,art,motion}  shared, keep small and stable
 src/lib/                      env, auth (session + viewer), policy (cross-campus), money, time, actions helpers

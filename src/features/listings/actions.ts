@@ -1,9 +1,10 @@
 "use server";
 
 import { getCampus } from "@/config/campuses";
-import { getRepo } from "@/data";
+import { getAr, getRepo } from "@/data";
 import type { ListingStatus } from "@/data/types";
 import { toAction, withViewer, type ActionResult } from "@/lib/actions";
+import { normalizeSpec } from "@/features/ar/build";
 import { getStorage } from "@/lib/storage";
 import { newListingSchema, type NewListingRaw } from "./schema";
 
@@ -29,7 +30,21 @@ export async function createListingAction(campus: string, raw: NewListingRaw): P
     } catch {
       return { ok: false, code: "invalid", message: "One of the photos couldn't be uploaded." };
     }
-    return toAction(await getRepo().createListing(v.actor, { ...parsed.data, imageUrls }), (l) => ({ id: l.id }));
+    const { arModel } = parsed.data;
+    const created = await getRepo().createListing(v.actor, { ...parsed.data, imageUrls });
+    if (created.ok && arModel) {
+      // The listing is already live; a failed 3D save must not undo it.
+      await getAr()
+        .save({
+          listingId: created.value.id,
+          campusId: v.actor.campusId,
+          sellerId: v.actor.userId,
+          spec: normalizeSpec(arModel.spec),
+          dimensionsCm: arModel.dimensionsCm,
+        })
+        .catch(() => null);
+    }
+    return toAction(created, (l) => ({ id: l.id }));
   });
 }
 

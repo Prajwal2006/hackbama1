@@ -7,6 +7,8 @@ import { neon } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { CAMPUSES } from "../../config/campuses";
+import { normalizeSpec } from "../../features/ar/build";
+import { AR_EXAMPLES, AR_SEEDED_LISTINGS } from "../../features/ar/examples";
 import * as s from "../schema";
 import { buildSeed } from ".";
 
@@ -29,6 +31,17 @@ export async function seedNeon(databaseUrl: string, opts: { reset: boolean }) {
   await db
     .insert(s.listings)
     .values(data.listings.map(({ auction, ...l }) => ({ ...l, ...(auction ?? {}) })))
+    .onConflictDoNothing();
+  await db
+    .insert(s.arModels)
+    .values(
+      data.listings.flatMap((l) => {
+        const key = AR_SEEDED_LISTINGS[l.id];
+        if (!key) return [];
+        const ex = AR_EXAMPLES[key];
+        return [{ listingId: l.id, campusId: l.campusId, sellerId: l.sellerId, spec: normalizeSpec(ex), dimensionsCm: ex.dimensionsCm }];
+      }),
+    )
     .onConflictDoNothing();
   await db.insert(s.bids).values(data.bids).onConflictDoNothing();
   await db.insert(s.dibs).values(data.dibs).onConflictDoNothing();

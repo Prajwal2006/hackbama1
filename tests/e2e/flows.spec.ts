@@ -47,6 +47,21 @@ test("visitors from another campus are view-only", async ({ page }) => {
   await expect(page.getByTestId("call-dibs")).toHaveCount(0);
 });
 
+test("a listing with a 3D model offers AR and serves a real-size GLB", async ({ page, request }) => {
+  await page.goto("/ua/listing/lst_ua_desk");
+  await expect(page.getByTestId("ar-section")).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Hang on wall/ })).toBeVisible();
+  await expect(page.getByText("120 × 60 × 75 cm")).toBeVisible();
+  const glb = await request.get("/api/ar/lst_ua_desk/model.glb");
+  expect(glb.status()).toBe(200);
+  expect(glb.headers()["content-type"]).toContain("model/gltf-binary");
+  expect((await glb.body()).subarray(0, 4).toString()).toBe("glTF");
+  // Listings without a model show no AR section, and the model route 404s.
+  await page.goto("/ua/listing/lst_ua_rug");
+  await expect(page.getByTestId("ar-section")).toHaveCount(0);
+  expect((await request.get("/api/ar/lst_ua_rug/model.glb")).status()).toBe(404);
+});
+
 test("create a free listing", async ({ page }) => {
   await signInDemo(page, "ua", "/ua/create");
   await page.getByLabel("Title").fill("Desk fan that oscillates");

@@ -3,7 +3,10 @@ import { randomInt } from "node:crypto";
 import { EmptyState } from "@/components/ui/misc";
 import { CreateListingForm } from "@/features/listings/components/CreateListingForm";
 import { requireMember } from "@/lib/campus";
-import { storageMode } from "@/lib/env";
+import { arScanEnabled, storageMode } from "@/lib/env";
+
+// Turning photos into a 3D model calls Gemini from a server action on this page (usually 3-15 s).
+export const maxDuration = 60;
 
 export const metadata: Metadata = { title: "Sell something" };
 
@@ -18,7 +21,7 @@ export default async function CreatePage({ params }: PageProps<"/[campus]/create
       </h1>
       {isMember ? (
         <>
-          <CreateListingForm campus={campus.slug} spots={campus.pickupSpots} seed={randomInt(360)} />
+          <CreateListingForm campus={campus.slug} spots={campus.pickupSpots} seed={randomInt(360)} arEnabled={arScanEnabled} />
           {storageMode === "mock" ? (
             <p className="mt-6 text-xs text-ink-3">Demo storage: photos are resized in your browser and kept in server memory only.</p>
           ) : null}

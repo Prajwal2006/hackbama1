@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pickupSpotName } from "@/config/campuses";
-import { getRepo } from "@/data";
+import { getAr, getRepo } from "@/data";
 import { CATEGORY_LABEL, CONDITION_LABEL, PICKUP_LABEL } from "@/data/types";
+import { ArViewer } from "@/features/ar/components/ArViewer";
 import { AuctionPanel } from "@/features/auctions/components/AuctionPanel";
 import { auctionPhase, bidderLabel, minNextBidCents } from "@/features/auctions/domain";
 import { DibsPanel } from "@/features/dibs/components/DibsPanel";
@@ -30,7 +31,7 @@ export default async function ListingPage({ params }: PageProps<"/[campus]/listi
   const { campus: slug, id } = await params;
   const { campus, viewer, savedIds } = await loadCampusContext(slug);
   const repo = getRepo();
-  const listing = await repo.getListing(id);
+  const [listing, arModel] = await Promise.all([repo.getListing(id), getAr().getByListing(id)]);
   // Tenant check: a listing is only served under its own campus path.
   if (!listing || listing.campusId !== campus.slug) notFound();
 
@@ -118,6 +119,18 @@ export default async function ListingPage({ params }: PageProps<"/[campus]/listi
                 <img key={i} src={u} alt="" className="aspect-square rounded-xl border border-line object-cover" />
               ))}
             </div>
+          ) : null}
+          {arModel ? (
+            <section className="mt-6" aria-labelledby="ar-heading" data-testid="ar-section">
+              <h2 id="ar-heading" className="mb-3 font-display text-xl font-bold">
+                See it in your room
+              </h2>
+              <ArViewer
+                src={`/api/ar/${listing.id}/model.glb`}
+                name={listing.title}
+                dimensionsLabel={`${Math.round(arModel.dimensionsCm.w)} × ${Math.round(arModel.dimensionsCm.d)} × ${Math.round(arModel.dimensionsCm.h)} cm`}
+              />
+            </section>
           ) : null}
         </div>
 
