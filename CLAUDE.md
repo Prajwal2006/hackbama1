@@ -10,7 +10,7 @@ Next 16 differs from older versions (`proxy.ts` not middleware, async `params`, 
 ```bash
 pnpm dev            # http://localhost:3000, demo mode if no env vars
 pnpm check          # lint + typecheck + unit tests — run before every push
-pnpm test:e2e       # Playwright (starts/reuses the dev server, forces mock data)
+pnpm test:e2e       # Playwright on :3100 with forced mock data — stop `pnpm dev` first (Next allows one dev server per project)
 pnpm build          # must pass before merging to main
 ```
 

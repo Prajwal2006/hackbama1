@@ -29,7 +29,7 @@ Open http://localhost:3000. With no environment variables the app runs in **demo
 | `pnpm build` / `pnpm start` | Production build / serve |
 | `pnpm lint` · `pnpm typecheck` | ESLint · route typegen + `tsc` |
 | `pnpm test` | Vitest: auction/dibs rules, money, tenant policy, repository authorization and races |
-| `pnpm test:e2e` | Playwright: dibs, bidding + settlement, create listing, cross-campus view-only, no overflow at 375/768/1280/1536/landscape |
+| `pnpm test:e2e` | (stop `pnpm dev` first) Playwright on port 3100 with forced mock data: dibs, bidding + settlement, create listing, cross-campus view-only, no overflow at 375/768/1280/1536/landscape |
 | `pnpm db:generate` · `pnpm db:migrate` · `pnpm db:seed` | Drizzle migrations and seed for Neon |
 
 ## Environment variables
@@ -49,13 +49,21 @@ Put these in `.env.local` (and in Vercel project settings). All are optional; a 
 
 ## Neon
 
-1. Create a Neon project; copy the pooled and direct connection strings into `.env.local`.
-2. `pnpm db:migrate` (applies `drizzle/0000_*.sql`).
-3. `pnpm db:seed` (idempotent; `--reset` wipes marketplace tables first — dev branches only).
+Fastest path, with the [Neon CLI](https://neon.com/docs/reference/neon-cli) (`npm i -g neon`, then `neon auth` once):
+
+```bash
+neon init -y --project-name dibs --no-agent-setup --no-config --package-manager pnpm
+pnpm db:migrate
+pnpm db:seed
+```
+
+`neon init` creates (or links, with `--project-id`) a project, writes `DATABASE_URL`, `DATABASE_URL_UNPOOLED` and `NEON_BRANCH` into `.env.local`, and pins it in `.neon` (gitignored). Restart `pnpm dev` and the banner drops "in-memory data".
+
+Manual path: create a project in the Neon console, put the pooled and direct connection strings in `.env.local`, then run the same two commands. `pnpm db:seed` is idempotent; `pnpm db:seed --reset` wipes marketplace tables first (dev branches only).
 
 Design notes: reads use Neon's HTTP driver; atomic operations (bid, buy-now, dibs, settlement) open a short-lived WebSocket `Pool`, run one transaction with `SELECT … FOR UPDATE` on the listing row, and close it. Postgres also enforces one active dib per listing (partial unique index), bid idempotency (unique `(bidder_id, idempotency_key)`), and tenant consistency (bids/dibs/saves reference listings by composite `(id, campus_id)`).
 
-> The Neon adapter typechecks and mirrors the mock adapter's rules, but it has **not** been run against a live database in this repo yet. Run the migration + seed and click through once before demoing on Neon.
+> Verified against a live Neon project: migration, seed, dibs and bidding through the UI, plus scripted races (concurrent bids, three-way dibs, buy-now), idempotent resubmits, idempotent settlement, and cross-campus/non-seller write rejection.
 
 ## Authentication
 

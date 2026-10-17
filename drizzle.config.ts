@@ -1,5 +1,10 @@
 import { defineConfig } from "drizzle-kit";
 
+// drizzle-kit doesn't read Next's .env.local on its own.
+try {
+  process.loadEnvFile(".env.local");
+} catch {}
+
 export default defineConfig({
   schema: "./src/data/schema/index.ts",
   out: "./drizzle",
