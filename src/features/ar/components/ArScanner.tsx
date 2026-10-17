@@ -11,6 +11,24 @@ import { ArViewer } from "./ArViewer";
 
 type Suggest = { name: string; description: string };
 
+/** Downscale a photo data URL to at most `edge` px as JPEG. Falls back to the original on any error. */
+async function shrinkForScan(dataUrl: string, edge = 800): Promise<string> {
+  try {
+    const img = new Image();
+    img.src = dataUrl;
+    await img.decode();
+    const scale = Math.min(1, edge / Math.max(img.naturalWidth, img.naturalHeight));
+    if (scale === 1 && dataUrl.length < 150_000) return dataUrl;
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth * scale);
+    c.height = Math.round(img.naturalHeight * scale);
+    c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.72);
+  } catch {
+    return dataUrl;
+  }
+}
+
 /** Live preview of an unsaved model: the GLB is built in the browser, no upload needed. */
 function useGlbPreview(spec: ArSpec | null, dims: ArDims | null) {
   const [url, setUrl] = useState<string | null>(null);
@@ -62,11 +80,19 @@ export function ArScanner({
 
   const generate = () =>
     start(async () => {
-      let r: Awaited<ReturnType<typeof analyzeArPhotosAction>>;
-      try {
-        r = await analyzeArPhotosAction(campus, images);
-      } catch {
-        // Network drop, server timeout or a crash: keep the form usable instead of hitting the error page.
+      // The model only needs small photos: shrinking them cuts the upload ~80%, which matters on phone data.
+      const small = await Promise.all(images.map((u) => shrinkForScan(u)));
+      let r: Awaited<ReturnType<typeof analyzeArPhotosAction>> | null = null;
+      for (let attempt = 0; attempt < 2 && !r; attempt++) {
+        try {
+          r = await analyzeArPhotosAction(campus, small);
+        } catch {
+          // Dropped connection or a cold server: wait a moment and retry once.
+          if (attempt === 0) await new Promise((res) => setTimeout(res, 1500));
+        }
+      }
+      if (!r) {
+        // Still failing: keep the form usable instead of hitting the error page.
         toast.error("Couldn't make the 3D model", { description: "The scan didn't finish. Check your connection and try again." });
         return;
       }
