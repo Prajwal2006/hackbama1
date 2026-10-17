@@ -22,6 +22,7 @@ import { ArScanner } from "@/features/ar/components/ArScanner";
 import type { ArModelInput } from "@/features/ar/spec";
 import { createListingAction } from "../actions";
 import { resizeImage } from "../image-resize";
+import { uploadPhoto } from "../upload-photo";
 
 const money = (label: string) =>
   z.string().trim().refine((v) => v === "" || parseDollarsToCents(v) !== null, `${label}: use a dollar amount like 25 or 12.50`);
@@ -93,6 +94,20 @@ export function CreateListingForm({
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [images, setImages] = useState<string[]>([]);
+  // Each photo uploads on its own as soon as it's added; posting only sends the short URLs.
+  const [uploads, setUploads] = useState<Record<string, string | "pending" | "failed">>({});
+  // In-flight uploads, so "Post it" waits for them instead of uploading twice.
+  const [inflight] = useState(() => new Map<string, Promise<string>>());
+  const startUpload = (preview: string) => {
+    setUploads((u) => ({ ...u, [preview]: "pending" }));
+    const p = uploadPhoto(preview);
+    inflight.set(preview, p);
+    p.then((url) => setUploads((u) => ({ ...u, [preview]: url }))).catch(() => {
+      inflight.delete(preview);
+      setUploads((u) => ({ ...u, [preview]: "failed" }));
+    });
+    return p;
+  };
   const [arModel, setArModel] = useState<ArModelInput | null>(null);
   const [pending, start] = useTransition();
   const [openedAt] = useState(() => Date.now());
@@ -122,6 +137,7 @@ export function CreateListingForm({
       try {
         const url = await resizeImage(f);
         setImages((prev) => [...prev, url].slice(0, 4));
+        startUpload(url);
       } catch (e) {
         toast.error((e as Error).message);
       }
@@ -131,6 +147,16 @@ export function CreateListingForm({
   const onSubmit = handleSubmit((d) => {
     const cents = (s: string) => parseDollarsToCents(s);
     start(async () => {
+      // Finish (or retry) any photo uploads first, so the post request stays tiny.
+      let imageUrls: string[];
+      try {
+        imageUrls = await Promise.all(
+          images.map((preview) => inflight.get(preview) ?? startUpload(preview)),
+        );
+      } catch (e) {
+        toast.error("A photo didn't upload", { description: `${(e as Error).message}. Remove it or try again.` });
+        return;
+      }
       let r: Awaited<ReturnType<typeof createListingAction>>;
       try {
         r = await createListingAction(campus, {
@@ -151,7 +177,7 @@ export function CreateListingForm({
                   buyNowPriceCents: cents(d.buyNow),
                 }
               : null,
-          imageUrls: images,
+          imageUrls,
           arModel,
           pickupMode: d.pickupMode,
           handoffStart: d.handoffStart ? (new Date(d.handoffStart).toISOString() as unknown as Date) : null,
@@ -240,6 +266,13 @@ export function CreateListingForm({
                       <div key={i} className="relative size-24 overflow-hidden rounded-2xl border border-line">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={src} alt={`Photo ${i + 1}`} className="h-full w-full object-cover" />
+                        {uploads[src] === "pending" ? (
+                          <span className="absolute inset-x-0 bottom-0 bg-bg/80 py-0.5 text-center text-[0.65rem] font-semibold">Uploading…</span>
+                        ) : uploads[src] === "failed" ? (
+                          <button type="button" onClick={() => startUpload(src)} className="absolute inset-x-0 bottom-0 bg-danger py-0.5 text-center text-[0.65rem] font-bold text-white">
+                            Retry upload
+                          </button>
+                        ) : null}
                         <button type="button" aria-label="Remove photo" onClick={() => setImages((p) => p.filter((_, j) => j !== i))}
                           className="absolute top-1 right-1 grid size-7 place-items-center rounded-full bg-bg/85">
                           <X className="size-4" />

@@ -5,7 +5,7 @@ import { getBank } from "@/data";
 import { BANK_CATEGORIES } from "@/data/bank-types";
 import { toAction, withViewer, type ActionResult } from "@/lib/actions";
 import { MAX_CENTS } from "@/lib/money";
-import { getStorage } from "@/lib/storage";
+import { getStorage, isAllowedPhotoUrl } from "@/lib/storage";
 
 const depositSchema = z.object({
   title: z.string().trim().min(3, "Name the item").max(80),
@@ -24,6 +24,7 @@ export async function depositAction(campus: string, raw: z.input<typeof depositS
   return withViewer(campus, async (v) => {
     if (v.actor.campusId !== campus) return { ok: false, code: "forbidden", message: "Deposit at the campus you're verified at." };
     let imageUrl: string | null = parsed.data.imageUrl;
+    if (imageUrl && !imageUrl.startsWith("data:") && !isAllowedPhotoUrl(imageUrl)) imageUrl = null;
     if (imageUrl?.startsWith("data:")) {
       try {
         imageUrl = await getStorage().putListingImage(imageUrl, { campusId: v.actor.campusId, userId: v.actor.userId });

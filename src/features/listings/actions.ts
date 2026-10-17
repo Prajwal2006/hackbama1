@@ -5,7 +5,7 @@ import { getAr, getRepo } from "@/data";
 import type { ListingStatus } from "@/data/types";
 import { toAction, withViewer, type ActionResult } from "@/lib/actions";
 import { normalizeSpec } from "@/features/ar/build";
-import { getStorage } from "@/lib/storage";
+import { getStorage, isAllowedPhotoUrl } from "@/lib/storage";
 import { newListingSchema, type NewListingRaw } from "./schema";
 
 export async function createListingAction(campus: string, raw: NewListingRaw): Promise<ActionResult<{ id: string }>> {
@@ -25,7 +25,11 @@ export async function createListingAction(campus: string, raw: NewListingRaw): P
     let imageUrls: string[];
     try {
       imageUrls = await Promise.all(
-        parsed.data.imageUrls.map((u) => storage.putListingImage(u, { campusId: v.actor.campusId, userId: v.actor.userId })),
+        parsed.data.imageUrls.map(async (u) => {
+          if (u.startsWith("data:")) return storage.putListingImage(u, { campusId: v.actor.campusId, userId: v.actor.userId });
+          if (!isAllowedPhotoUrl(u)) throw new Error("Unknown photo URL");
+          return u;
+        }),
       );
     } catch {
       return { ok: false, code: "invalid", message: "One of the photos couldn't be uploaded." };

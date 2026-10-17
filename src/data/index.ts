@@ -4,6 +4,7 @@ import type { ArRepository } from "./ar-repository";
 import { createMockArRepository } from "./adapters/mock/ar";
 import { createNeonArRepository } from "./adapters/neon/ar";
 import type { AuthStore } from "./auth-store";
+import { createMockPhotoStore, createNeonPhotoStore, type PhotoStore } from "./photo-store";
 import type { BankRepository } from "./bank-repository";
 import { createMockBankRepository } from "./adapters/mock/bank";
 import { createNeonBankRepository } from "./adapters/neon/bank";
@@ -50,6 +51,13 @@ export function getAr(): ArRepository {
 export function getBank(): BankRepository {
   bank ??= dataMode === "neon" ? createNeonBankRepository(env.databaseUrl) : createMockBankRepository();
   return bank;
+}
+
+let photoStore: PhotoStore | undefined;
+/** Photo bytes when Vercel Blob isn't configured. */
+export function getPhotoStore(): PhotoStore {
+  photoStore ??= dataMode === "neon" ? createNeonPhotoStore(env.databaseUrl) : createMockPhotoStore();
+  return photoStore;
 }
 
 export type { MarketRepository, Actor, Result } from "./repository";
