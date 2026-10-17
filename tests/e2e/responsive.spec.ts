@@ -28,3 +28,17 @@ test("navigation adapts: tabs on phone, sidebar on desktop", async ({ page }) =>
   await expect(page.locator("aside")).toBeVisible();
   await expect(page.locator("nav.fixed")).toBeHidden();
 });
+
+test("phones can reach every feature from the menu", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/ua");
+  await page.getByTestId("mobile-menu").click();
+  const sheet = page.getByRole("dialog");
+  for (const name of ["Furniture Bank", "Handoffs", "Swipe", "Split subs", "Rides & trips", "Meal share", "Class swap"]) {
+    await expect(sheet.getByRole("link", { name })).toBeVisible();
+  }
+  await sheet.getByRole("link", { name: "Class swap" }).click();
+  await page.waitForURL("**/ua/x/class-swap");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByTestId("home-modules")).toHaveCount(0);
+});

@@ -1,6 +1,8 @@
 import { ArrowRight, Gavel, Gift, Plus } from "lucide-react";
 import Link from "next/link";
 import { ItemArt } from "@/components/art/ItemArt";
+import { FEATURE_ICONS } from "@/components/shell/icons";
+import { featureHref, featuresFor } from "@/config/features";
 import { Reveal, Stagger } from "@/components/motion/Reveal";
 import { CountUp } from "@/components/reactbits/CountUp";
 import { buttonVariants } from "@/components/ui/button";
@@ -107,6 +109,33 @@ export default async function CampusHome({ params }: PageProps<"/[campus]">) {
             <p className="text-sm text-ink-3">{s.label}</p>
           </div>
         ))}
+      </section>
+
+      {/* ——— More than buying: every registry module, so phones can find them too ——— */}
+      <section aria-label="More on Dibs" data-testid="home-modules">
+        <SectionHeading kicker="More on Dibs" title="Beyond buying and selling" />
+        <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 scrollbar-none md:mx-0 md:grid md:grid-cols-3 md:px-0 xl:grid-cols-4">
+          {featuresFor(campus.slug)
+            .filter((f) => f.route.startsWith("x/"))
+            .map((f) => {
+              const Icon = FEATURE_ICONS[f.icon];
+              return (
+                <Link
+                  key={f.id}
+                  href={featureHref(campus.slug, f)}
+                  className="flex w-64 shrink-0 snap-start items-start gap-3 rounded-[1.4rem] border border-line bg-surface p-4 transition-colors hover:border-line-strong md:w-auto"
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink">
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-display font-extrabold">{f.title}</span>
+                    <span className="line-clamp-2 text-sm text-ink-2">{f.blurb}</span>
+                  </span>
+                </Link>
+              );
+            })}
+        </div>
       </section>
 
       {/* ——— Categories ——— */}
