@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { CampusTheme } from "./CampusTheme";
 import { CommandPaletteProvider, PaletteTrigger } from "./CommandPalette";
 import { DemoBanner } from "./DemoBanner";
+import { MobileMenu } from "./MobileMenu";
 import { MobileTabs, SideNav } from "./Nav";
 import { ThemeToggle } from "./ThemeToggle";
 import type { ShellViewer } from "./types";
@@ -105,6 +106,9 @@ export function AppShell({
                   </span>
                 ) : null}
                 <ThemeToggle />
+                <Suspense>
+                  <MobileMenu campus={campus.slug} unread={unread} />
+                </Suspense>
                 {viewer ? (
                   <>
                     <Link
