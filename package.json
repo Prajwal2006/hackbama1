@@ -1,0 +1,21 @@
+{
+  "name": "ar-furniture-demo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "models": "node scripts/generate-models.js",
+    "demo": "vite build && vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "gltf-validator": "^2.0.0-dev.3.10",
+    "vite": "^8.3.4"
+  },
+  "dependencies": {
+    "@google/model-viewer": "^4.4.0",
+    "three": "^0.183.2"
+  }
+}

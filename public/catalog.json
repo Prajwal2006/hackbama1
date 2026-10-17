@@ -1,0 +1,89 @@
+[
+  {
+    "id": "desk",
+    "name": "Study Desk",
+    "model": "/models/desk.glb",
+    "dimensionsCm": {
+      "w": 120,
+      "d": 60,
+      "h": 75
+    },
+    "placement": "floor",
+    "description": "Solid wood-look desk with a side drawer."
+  },
+  {
+    "id": "mirror",
+    "name": "Standing Mirror",
+    "model": "/models/mirror.glb",
+    "dimensionsCm": {
+      "w": 50,
+      "d": 5,
+      "h": 150
+    },
+    "placement": "floor",
+    "description": "Full-length mirror with a dark frame."
+  },
+  {
+    "id": "lamp",
+    "name": "Table Lamp",
+    "model": "/models/lamp.glb",
+    "dimensionsCm": {
+      "w": 25,
+      "d": 25,
+      "h": 45
+    },
+    "placement": "floor",
+    "description": "Warm glowing lamp."
+  },
+  {
+    "id": "chair",
+    "name": "Desk Chair",
+    "model": "/models/chair.glb",
+    "dimensionsCm": {
+      "w": 45,
+      "d": 45,
+      "h": 90
+    },
+    "placement": "floor",
+    "description": "Simple padded chair."
+  },
+  {
+    "id": "scan-commercial-trash-can-wit-86c5",
+    "name": "Commercial Trash Can with Liner",
+    "model": "/models/scan-commercial-trash-can-wit-86c5.glb",
+    "dimensionsCm": {
+      "w": 56,
+      "d": 50,
+      "h": 70
+    },
+    "placement": "floor",
+    "description": "A grey heavy-duty plastic trash container with side handles and a semi-transparent plastic bag liner tied around the rim.",
+    "scanned": true
+  },
+  {
+    "id": "scan-commercial-trash-can-wit-aedf",
+    "name": "Commercial Trash Can with Liner",
+    "model": "/models/scan-commercial-trash-can-wit-aedf.glb",
+    "dimensionsCm": {
+      "w": 55,
+      "d": 50,
+      "h": 60
+    },
+    "placement": "floor",
+    "description": "A heavy-duty gray plastic round trash container fitted with a clear plastic liner bag.",
+    "scanned": true
+  },
+  {
+    "id": "scan-drafting-stool-chair-dab7",
+    "name": "Drafting Stool Chair",
+    "model": "/models/scan-drafting-stool-chair-dab7.glb",
+    "dimensionsCm": {
+      "w": 65,
+      "d": 65,
+      "h": 110
+    },
+    "placement": "floor",
+    "description": "An ergonomic black drafting stool with armrests, a circular chrome footring, and a 5-star mobile base.",
+    "scanned": true
+  }
+]
