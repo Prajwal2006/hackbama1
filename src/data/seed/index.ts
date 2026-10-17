@@ -3,7 +3,9 @@
  * live / ending soon / closed when the demo starts. IDs are stable.
  * Used by the mock adapter and by `pnpm db:seed` for Neon.
  */
+import { buildBankSeed } from "./bank";
 import { buildCommunitySeed, type CommunitySeed } from "./community";
+import type { BankItem, BankReservation } from "../bank-types";
 import type { Bid, Category, Condition, Dib, Listing, Notification, PickupMode, Profile, Save } from "../types";
 
 export const DEMO_STUDENT_ID: Record<string, string> = {
@@ -18,7 +20,7 @@ export type SeedData = {
   dibs: Dib[];
   saves: Save[];
   notifications: Notification[];
-} & CommunitySeed;
+} & CommunitySeed & { bankItems: BankItem[]; bankReservations: BankReservation[] };
 
 type ListingSeed = {
   id: string;
@@ -401,5 +403,5 @@ export function buildSeed(now: Date = new Date()): SeedData {
     title: "Maya called dibs!", body: "Your gooseneck kettle is reserved. Maya says she sent $18 on Venmo.",
     listingId: "lst_ua_kettle", readAt: null, createdAt: t(-1),
   });
-  return { profiles, listings, bids, dibs, saves, notifications, ...buildCommunitySeed(now, listings) };
+  return { profiles, listings, bids, dibs, saves, notifications, ...buildCommunitySeed(now, listings), ...buildBankSeed(now) };
 }

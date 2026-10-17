@@ -28,12 +28,12 @@ export const TOUR_STEPS: TourStep[] = [
     body: "Sign-in is a 6-digit code emailed to your campus address — the domain is checked on the server, codes expire in 10 minutes and allow 5 tries. For this demo we're already signed in as a seeded UA student.",
   },
   {
-    id: "home", route: "/ua", target: "home-hero", kicker: "Campus home", seconds: 15,
+    id: "home", route: "/ua", target: "home-hero", kicker: "Campus home", seconds: 12,
     title: "Each campus is its own marketplace.",
     body: "UA crimson theme, a countdown to move-out, and live numbers straight from the database — nothing decorative.",
   },
   {
-    id: "free", route: "/ua/browse?mode=free", target: "filters", kicker: "Free first", seconds: 15,
+    id: "free", route: "/ua/browse?mode=free", target: "filters", kicker: "Free first", seconds: 12,
     title: "Free stuff is a first-class filter.",
     body: "Search, category, hall, price, pickup and sale mode — all in the URL so results are shareable. Free items get the yellow sticker.",
   },
@@ -67,6 +67,18 @@ export const TOUR_STEPS: TourStep[] = [
     try: "Tap “Yes, I got $18.00”, then “Mark handed off”.",
   },
   {
+    id: "bank", route: "/ua/x/bank", target: "bank-builder", kicker: "Furniture Bank", seconds: 20,
+    title: "Buy a room from the future.",
+    body: "Leaving students deposit furniture instead of dumping it; it's stored over summer. Incoming students set a budget and Dibs assembles a dorm from real inventory, reserved for move-in day — all or nothing, no double-booking.",
+    try: "Tap “Build my $200 dorm”, then “Reserve for move-in”.",
+  },
+  {
+    id: "futures", route: "/ua/x/bank", target: "bank-timeline", kicker: "Furniture futures", seconds: 16,
+    title: "Sold in May. Stored all summer. Delivered in August.",
+    body: "Each item has an inventory ID, a shelf and a history. Fast-forward the calendar: it's delivered at move-in, and next May it goes back into circulation for the next class. Storage & delivery are simulated in this prototype.",
+    try: "Tap the “Demo: skip ahead” button a few times.",
+  },
+  {
     id: "swipe", route: "/ua/x/swipe", target: "swipe", kicker: "Discovery", seconds: 14,
     title: "Tinder for random dorm stuff.",
     body: "Swipe right to save, left to skip. Saves land in your profile.",
@@ -79,12 +91,12 @@ export const TOUR_STEPS: TourStep[] = [
     try: "Join the YouTube split.",
   },
   {
-    id: "rides", route: "/ua/x/rides", target: "board-ride", kicker: "Rides & trips", seconds: 14,
+    id: "rides", route: "/ua/x/rides", target: "board-ride", kicker: "Rides & trips", seconds: 12,
     title: "Carpool home. Split the beach house.",
     body: "Drivers publish a route, seats and a fair share; trips split lodging and gas for break.",
   },
   {
-    id: "meals", route: "/ua/x/meals", target: "board-meal", kicker: "Off-campus meal plan", seconds: 15,
+    id: "meals", route: "/ua/x/meals", target: "board-meal", kicker: "Off-campus meal plan", seconds: 12,
     title: "Cook once, feed the floor.",
     body: "Students who love to cook post bulk batches; everyone else claims portions for a few bucks — or a trade.",
   },
@@ -95,7 +107,7 @@ export const TOUR_STEPS: TourStep[] = [
     try: "Tap “Find my swap” (CS 201: have 002, want 001), then “I'm in”.",
   },
   {
-    id: "multi", route: "/riverbend", target: "home-hero", kicker: "Multi-campus", seconds: 15,
+    id: "multi", route: "/riverbend", target: "home-hero", kicker: "Multi-campus", seconds: 13,
     title: "A new campus is one config entry.",
     body: "Riverbend State (fictional) has its own colors, email domains, dates and pickup spots. You're a UA student, so here you're view-only — tenant isolation is enforced on the server and in Postgres.",
   },
