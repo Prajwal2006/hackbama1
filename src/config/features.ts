@@ -60,6 +60,8 @@ export const FEATURES: Feature[] = [
     status: "live", owner: "core", group: "you", nav: { sidebar: true, mobileTab: 4, palette: true }, requiresAuth: true,
     keywords: ["profile", "account", "bids", "saved"] },
 
+  { id: "bank", title: "Furniture Bank", blurb: "Deposit furniture at move-out; reserve a whole dorm for move-in, delivered in August.", icon: "box", route: "x/bank",
+    status: "live", owner: "dev-a", group: "market", nav: { sidebar: true, palette: true }, keywords: ["storage", "furniture", "futures", "consign", "summer"] },
   // ——— Student life modules (each owns src/features/<id>/) ———
   { id: "handoffs", title: "Handoffs", blurb: "Schedule pickups for move-out or hold until move-in; both sides confirm payment.", icon: "calendar", route: "x/handoffs",
     status: "live", owner: "dev-a", group: "you", nav: { sidebar: true, palette: true }, requiresAuth: true, keywords: ["pickup", "schedule", "move-in", "move-out", "payment"] },

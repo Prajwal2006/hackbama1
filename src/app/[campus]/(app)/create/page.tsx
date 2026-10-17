@@ -1,4 +1,6 @@
+import { ArrowRight, Warehouse } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { randomInt } from "node:crypto";
 import { EmptyState } from "@/components/ui/misc";
 import { CreateListingForm } from "@/features/listings/components/CreateListingForm";
@@ -21,6 +23,18 @@ export default async function CreatePage({ params }: PageProps<"/[campus]/create
       </h1>
       {isMember ? (
         <>
+          <Link
+            href={`/${campus.slug}/x/bank`}
+            className="mb-6 flex items-center gap-4 rounded-[1.5rem] border border-dashed border-accent/60 bg-accent/5 p-4 transition-colors hover:bg-accent/10"
+            data-testid="bank-callout"
+          >
+            <Warehouse className="size-8 shrink-0 text-accent" />
+            <span className="flex-1">
+              <strong className="font-display text-lg">Furniture and leaving soon?</strong>
+              <span className="block text-sm text-ink-2">Deposit it in the Furniture Bank instead — it&apos;s stored over the summer and sold to a student moving in next semester.</span>
+            </span>
+            <ArrowRight className="size-5 text-ink-3" />
+          </Link>
           <CreateListingForm campus={campus.slug} spots={campus.pickupSpots} seed={randomInt(360)} arEnabled={arScanEnabled} />
           {storageMode === "mock" ? (
             <p className="mt-6 text-xs text-ink-3">Demo storage: photos are resized in your browser and kept in server memory only.</p>

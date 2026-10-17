@@ -15,7 +15,7 @@ import { buildSeed } from ".";
 export async function seedNeon(databaseUrl: string, opts: { reset: boolean }) {
   const db = drizzle({ client: neon(databaseUrl), schema: s });
   if (opts.reset) {
-    await db.execute(sql`truncate notifications, saves, dibs, bids, handoffs, community_members, community_posts, swap_requests, swap_cycles, email_codes, listings restart identity cascade`);
+    await db.execute(sql`truncate notifications, saves, dibs, bids, handoffs, community_members, community_posts, swap_requests, swap_cycles, bank_reservations, bank_items, email_codes, listings restart identity cascade`);
   }
   const data = buildSeed(new Date());
 
@@ -52,5 +52,6 @@ export async function seedNeon(databaseUrl: string, opts: { reset: boolean }) {
   await db.insert(s.communityMembers).values(data.members).onConflictDoNothing();
   await db.insert(s.swapRequests).values(data.swaps).onConflictDoNothing();
   await db.insert(s.swapCycles).values(data.cycles).onConflictDoNothing();
+  await db.insert(s.bankItems).values(data.bankItems).onConflictDoNothing();
   return { listings: data.listings.length, bids: data.bids.length, posts: data.posts.length, swaps: data.swaps.length };
 }

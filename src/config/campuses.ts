@@ -35,6 +35,8 @@ export type CampusConfig = {
   /** ISO dates (campus local). Drive the move-out / move-in countdown. */
   moveOutDate: string;
   moveInDate: string;
+  /** Fall move-in (end of the summer storage window), used by the Furniture Bank. */
+  fallMoveInDate: string;
   theme: { dark: CampusTheme; light: CampusTheme };
   pickupSpots: PickupSpot[];
   /** Fictional campuses are flagged so the UI can say so. */
@@ -59,6 +61,7 @@ export const CAMPUSES = [
     timezone: "America/Chicago",
     moveOutDate: "2026-12-12",
     moveInDate: "2027-01-12",
+    fallMoveInDate: "2027-08-14",
     theme: {
       dark: { accent: "#e0243c", accentInk: "#fff6f0", accent2: "#f5c76b", glow: "#3a0d14" },
       light: { accent: "#a50f26", accentInk: "#fff6f0", accent2: "#b9771c", glow: "#f6dcdc" },
@@ -86,6 +89,7 @@ export const CAMPUSES = [
     timezone: "America/New_York",
     moveOutDate: "2026-12-18",
     moveInDate: "2027-01-19",
+    fallMoveInDate: "2027-08-21",
     theme: {
       dark: { accent: "#c8f442", accentInk: "#12140a", accent2: "#5fd4ff", glow: "#1d2a0c" },
       light: { accent: "#4d7a00", accentInk: "#f7ffe6", accent2: "#0b7fa8", glow: "#e7f4cc" },

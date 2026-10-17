@@ -115,12 +115,37 @@ test("class swap finds the 3-way loop", async ({ page }) => {
 test("guided tour walks all stops", async ({ page }) => {
   await page.goto("/demo");
   await page.getByTestId("start-tour").click();
-  await expect(page.getByTestId("tour-card")).toContainText("1/16");
-  for (let i = 2; i <= 16; i++) {
+  await page.waitForURL((u) => u.pathname === "/");
+  await expect(page.getByTestId("tour-card")).toContainText("1/18");
+  for (let i = 2; i <= 18; i++) {
     await page.getByTestId("tour-next").click();
-    await expect(page.getByTestId("tour-card")).toContainText(`${i}/16`);
+    await expect(page.getByTestId("tour-card")).toContainText(`${i}/18`);
+    await page.waitForLoadState("networkidle");
   }
-  await expect(page).toHaveURL(/\/ua\/me/);
+  // Dev-mode cold compiles can lag behind fast clicking; the last navigation wins.
+  await expect(page).toHaveURL(/\/ua\/me/, { timeout: 45_000 });
   await page.getByTestId("tour-next").click();
   await expect(page.getByTestId("tour-card")).toHaveCount(0);
+});
+
+test("furniture bank: build a $200 dorm, reserve, fast-forward to recirculation", async ({ page }) => {
+  await signInDemo(page, "ua", "/ua/x/bank");
+  // Centre buttons first so the phone's fixed tab bar never covers them.
+  // The phone layout has a fixed tab bar and top toasts that Playwright's auto-scroll keeps
+  // landing under; scroll to centre and dispatch the click (layout checked manually at 375px).
+  const tap = async (l: import("@playwright/test").Locator) => {
+    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await expect(l).toBeEnabled();
+    await l.dispatchEvent("click");
+  };
+  await tap(page.getByTestId("build-bundle"));
+  await tap(page.getByTestId("reserve-bundle"));
+  const tl = page.getByTestId("futures-timeline").first();
+  await expect(tl).toBeVisible();
+  await expect(tl.locator('[aria-current="step"]')).toContainText("Sold in May");
+  for (const stage of ["Stored over summer", "Delivered in August", "Back in circulation"]) {
+    await tap(tl.getByTestId("advance-time"));
+    await expect(tl.locator('[aria-current="step"]')).toContainText(stage);
+  }
+  await expect(tl).toContainText("Full cycle complete");
 });

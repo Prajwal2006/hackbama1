@@ -4,6 +4,9 @@ import type { ArRepository } from "./ar-repository";
 import { createMockArRepository } from "./adapters/mock/ar";
 import { createNeonArRepository } from "./adapters/neon/ar";
 import type { AuthStore } from "./auth-store";
+import type { BankRepository } from "./bank-repository";
+import { createMockBankRepository } from "./adapters/mock/bank";
+import { createNeonBankRepository } from "./adapters/neon/bank";
 import type { CommunityRepository } from "./community-repository";
 import { createMockCommunityRepository } from "./adapters/mock/community";
 import { createNeonCommunityRepository } from "./adapters/neon/community";
@@ -17,6 +20,7 @@ let repo: MarketRepository | undefined;
 let auth: AuthStore | undefined;
 let community: CommunityRepository | undefined;
 let ar: ArRepository | undefined;
+let bank: BankRepository | undefined;
 
 /** The single entry point to marketplace data. Picks the adapter from the environment. */
 export function getRepo(): MarketRepository {
@@ -40,6 +44,12 @@ export function getCommunity(): CommunityRepository {
 export function getAr(): ArRepository {
   ar ??= dataMode === "neon" ? createNeonArRepository(env.databaseUrl) : createMockArRepository();
   return ar;
+}
+
+/** Campus Furniture Bank (consignment storage + future-dated reservations). */
+export function getBank(): BankRepository {
+  bank ??= dataMode === "neon" ? createNeonBankRepository(env.databaseUrl) : createMockBankRepository();
+  return bank;
 }
 
 export type { MarketRepository, Actor, Result } from "./repository";
