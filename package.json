@@ -17,6 +17,7 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.4.0",
     "@hookform/resolvers": "^5.9.1",
     "@neondatabase/serverless": "^1.2.0",
     "@react-three/drei": "^10.7.9",

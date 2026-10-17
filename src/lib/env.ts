@@ -11,6 +11,11 @@ export const env = {
   emailFrom: process.env.EMAIL_FROM ?? process.env.AUTH_EMAIL_FROM ?? "Dibs <onboarding@resend.dev>",
   blobToken: process.env.BLOB_READ_WRITE_TOKEN ?? "",
   cronSecret: process.env.CRON_SECRET ?? "",
+  /** Photo -> 3D model (AR). Without a key the sell form hides the 3D step; seeded demo models still work. */
+  geminiKey: process.env.GEMINI_API_KEY ?? "",
+  /** Comma-separated fallback chain, best first. */
+  geminiModels: (process.env.GEMINI_MODELS ?? "").split(",").map((m) => m.trim()).filter(Boolean),
+  geminiThinking: process.env.GEMINI_THINKING ?? "low",
   forceMock: process.env.DIBS_FORCE_MOCK === "1",
   /** Allow wiping and reseeding a Neon database from the demo UI. Never set on a real deployment. */
   allowNeonReset: process.env.DIBS_ALLOW_DEMO_RESET === "1",
@@ -30,6 +35,9 @@ export const isDemo = dataMode === "mock" || emailDelivery === "screen";
 
 /** Signs session cookies and code hashes. The dev fallback is fine locally; set AUTH_SECRET in production. */
 export const sessionSecret = env.authSecret || "dibs-dev-only-not-a-secret";
+
+/** Whether sellers can turn photos into AR models on this deployment. */
+export const arScanEnabled = Boolean(env.geminiKey);
 
 export const storageMode: "blob" | "mock" = env.blobToken ? "blob" : "mock";
 

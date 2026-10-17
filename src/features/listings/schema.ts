@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CATEGORIES, CONDITIONS, PICKUP_MODES, SALE_MODES } from "@/data/types";
+import { arModelInputSchema } from "@/features/ar/spec";
 import { MAX_CENTS } from "@/lib/money";
 
 const cents = z.number().int().nonnegative().max(MAX_CENTS);
@@ -37,6 +38,8 @@ export const newListingSchema = z
     pickupSpotId: z.string().max(64).nullable().default(null),
     holdForMoveIn: z.boolean().default(false),
     locationHint: z.string().trim().max(140).nullable().default(null),
+    /** Optional 3D model the seller generated from the photos; buyers can place it in their room (AR). */
+    arModel: arModelInputSchema.nullable().default(null),
     /** Hue for the generated illustration, so the preview matches the posted listing. */
     artSeed: z.number().int().min(0).max(359).optional(),
   })
