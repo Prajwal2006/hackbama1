@@ -27,18 +27,25 @@ export async function analyzeArPhotosAction(campus: string, imageUrls: string[])
   if (!imageUrls.every((u) => typeof u === "string" && u.length <= MAX_IMAGE_CHARS && DATA_URL.test(u))) {
     return { ok: false, code: "invalid", message: "Those photos couldn't be read. Try adding them again." };
   }
-  return withViewer(campus, async (v) => {
-    if (v.actor.campusId !== campus) {
-      return { ok: false, code: "forbidden", message: "You can only list items at the campus you're verified at." };
-    }
-    if (tooMany(v.actor.userId)) {
-      return { ok: false, code: "unavailable", message: "Slow down a little. Try again in a minute." };
-    }
-    try {
-      return { ok: true, data: await analyzePhotos(imageUrls) };
-    } catch (e) {
-      const message = e instanceof GeminiError ? e.message : "The 3D scan failed. Please try again.";
-      return { ok: false, code: e instanceof GeminiError && e.code === "rate_limited" ? "unavailable" : "invalid", message };
-    }
-  });
+  try {
+    return await withViewer(campus, async (v) => {
+      if (v.actor.campusId !== campus) {
+        return { ok: false, code: "forbidden", message: "You can only list items at the campus you're verified at." };
+      }
+      if (tooMany(v.actor.userId)) {
+        return { ok: false, code: "unavailable", message: "Slow down a little. Try again in a minute." };
+      }
+      try {
+        return { ok: true, data: await analyzePhotos(imageUrls) };
+      } catch (e) {
+        if (!(e instanceof GeminiError)) console.error("[dibs] AR scan failed", e);
+        const message = e instanceof GeminiError ? e.message : "The 3D scan failed. Please try again.";
+        return { ok: false, code: e instanceof GeminiError && e.code === "rate_limited" ? "unavailable" : "invalid", message };
+      }
+    });
+  } catch (e) {
+    // Never let an action throw: in production that surfaces as an opaque React error page.
+    console.error("[dibs] AR scan action crashed", e);
+    return { ok: false, code: "invalid", message: "The 3D scan failed on our side. Please try again." };
+  }
 }

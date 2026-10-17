@@ -80,8 +80,9 @@ export class GeminiError extends Error {
 const DEFAULT_MODELS = "gemini-3.5-flash,gemini-3-flash-preview,gemini-3.5-flash-lite,gemini-3.1-flash-lite";
 // A model that returned 429 (quota) is skipped for a minute instead of being retried.
 const cooldown = new Map<string, number>();
-const CALL_TIMEOUT_MS = 40_000;
-const TOTAL_BUDGET_MS = 60_000; // Vercel function limit is set above this on the pages that call us
+// Vercel kills the function at 60 s (maxDuration on the sell page), so every call must finish well before that.
+const CALL_TIMEOUT_MS = 30_000;
+const TOTAL_BUDGET_MS = 48_000;
 
 const clampDim = (v: unknown) => Math.max(5, Math.min(400, Number(v) || 50));
 
@@ -105,13 +106,14 @@ export async function analyzePhotos(images: string[]): Promise<ArAnalysis> {
   for (const [i, model] of models.entries()) {
     const last = i === models.length - 1;
     if (!last && (cooldown.get(model) ?? 0) > Date.now()) continue;
-    if (Date.now() - started > TOTAL_BUDGET_MS) break;
+    const remaining = TOTAL_BUDGET_MS - (Date.now() - started);
+    if (remaining < 5_000) break;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-goog-api-key": env.geminiKey },
-          signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
+          signal: AbortSignal.timeout(Math.min(CALL_TIMEOUT_MS, TOTAL_BUDGET_MS - (Date.now() - started))),
           body: JSON.stringify({
             contents: [{ parts }],
             generationConfig: {
@@ -127,7 +129,7 @@ export async function analyzePhotos(images: string[]): Promise<ArAnalysis> {
         res = null; // timed out or network error: move on to the next model
         break;
       }
-      if (res.status !== 503) break; // 503 = temporary demand, retry once
+      if (res.status !== 503 || TOTAL_BUDGET_MS - (Date.now() - started) < 8_000) break; // 503 = temporary demand, retry once if time allows
       await new Promise((r) => setTimeout(r, 1500));
     }
     if (res?.ok) break;
@@ -140,7 +142,12 @@ export async function analyzePhotos(images: string[]): Promise<ArAnalysis> {
     throw new GeminiError("The 3D scan took too long. Please try again.", "failed");
   }
 
-  const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+  let body: { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+  try {
+    body = await res.json();
+  } catch {
+    throw new GeminiError("The scan result was garbled. Please try again.", "failed");
+  }
   const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
   if (!text) throw new GeminiError("Gemini couldn't read those photos. Try clearer ones.", "failed");
 

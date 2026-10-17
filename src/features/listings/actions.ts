@@ -33,16 +33,18 @@ export async function createListingAction(campus: string, raw: NewListingRaw): P
     const { arModel } = parsed.data;
     const created = await getRepo().createListing(v.actor, { ...parsed.data, imageUrls });
     if (created.ok && arModel) {
-      // The listing is already live; a failed 3D save must not undo it.
-      await getAr()
-        .save({
+      // The listing is already live; a failed 3D save (bad spec or DB error) must not undo it.
+      try {
+        await getAr().save({
           listingId: created.value.id,
           campusId: v.actor.campusId,
           sellerId: v.actor.userId,
           spec: normalizeSpec(arModel.spec),
           dimensionsCm: arModel.dimensionsCm,
-        })
-        .catch(() => null);
+        });
+      } catch (e) {
+        console.error("[dibs] saving AR model failed", e);
+      }
     }
     return toAction(created, (l) => ({ id: l.id }));
   });
