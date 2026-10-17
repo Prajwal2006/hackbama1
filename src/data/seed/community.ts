@@ -101,21 +101,21 @@ export function buildCommunitySeed(now: Date, listings: Listing[]): CommunitySee
   // ——— Meal share ———
   post({ id: "pst_meal_curry", campusId: "ua", kind: "meal", ownerId: "usr_ua_ana", title: "Butter chicken + basmati, 8 portions",
     body: "Big batch Sunday. Bring a container or grab one of mine.", capacity: 8, unitPriceCents: 500, startsAt: t(6),
-    imageUrl: "/photos/meal_curry.jpg", data: { dish: "Butter chicken", dietary: ["halal", "gluten-free"], pickupSpot: "Lakeside lobby", trade: null } },
+    imageUrl: "/photos/meal_curry.jpg", data: { dish: "Butter chicken", dietary: ["halal", "gluten-free"], pickupSpot: "The Lark Tuscaloosa", trade: null } },
     [["usr_ua_cole", 2], ["usr_ua_dev", 1, "received"]], 12);
   post({ id: "pst_meal_tacos", campusId: "ua", kind: "meal", ownerId: "usr_ua_jordan", title: "Birria tacos — Friday batch",
     body: "Consommé included. 3 tacos per portion.", capacity: 12, unitPriceCents: 600, startsAt: t(30),
-    imageUrl: "/photos/meal_tacos.jpg", data: { dish: "Birria tacos", dietary: [], pickupSpot: "Presidential Village courtyard", trade: null } },
+    imageUrl: "/photos/meal_tacos.jpg", data: { dish: "Birria tacos", dietary: [], pickupSpot: "Downtown Tuscaloosa, off Greensboro Ave", trade: null } },
     [["usr_ua_maya", 2, "sent"], ["usr_ua_priya", 1], ["usr_ua_ana", 1]], 20);
   post({ id: "pst_meal_rice", campusId: "ua", kind: "meal", ownerId: "usr_ua_priya", title: "Veggie fried rice — trade me anything",
     capacity: 6, unitPriceCents: 0, startsAt: t(4), imageUrl: "/photos/meal_friedrice.jpg",
-    data: { dish: "Vegetable fried rice", dietary: ["vegetarian"], pickupSpot: "Tutwiler Hall lobby", trade: "A dessert, or $3 if you insist" } }, [["usr_ua_jordan"]], 5);
+    data: { dish: "Vegetable fried rice", dietary: ["vegetarian"], pickupSpot: "Off campus, Northport", trade: "A dessert, or $3 if you insist" } }, [["usr_ua_jordan"]], 5);
   post({ id: "pst_meal_bread", campusId: "ua", kind: "meal", ownerId: "usr_ua_maya", title: "Banana bread, still warm",
     capacity: 10, unitPriceCents: 200, startsAt: t(3), imageUrl: "/photos/meal_bananabread.jpg",
-    data: { dish: "Banana bread slices", dietary: ["vegetarian"], pickupSpot: "Ridgecrest South lobby", trade: null } }, [["usr_ua_cole", 2, "received"]], 2);
+    data: { dish: "Banana bread slices", dietary: ["vegetarian"], pickupSpot: "Off campus, Alberta neighborhood", trade: null } }, [["usr_ua_cole", 2, "received"]], 2);
   post({ id: "pst_meal_prep", campusId: "ua", kind: "meal", ownerId: "usr_ua_dev", title: "Meal-prep bowls: 5 lunches for the week",
     body: "Chicken, rice, roasted veg, corn salsa. Picked up Sunday, eaten by Friday.", capacity: 3, unitPriceCents: 2500, startsAt: t(50),
-    imageUrl: "/photos/meal_prep.jpg", data: { dish: "Meal-prep bowls ×5", dietary: ["high-protein"], pickupSpot: "Ferguson Student Center", trade: null } },
+    imageUrl: "/photos/meal_prep.jpg", data: { dish: "Meal-prep bowls ×5", dietary: ["high-protein"], pickupSpot: "Off campus, 15th St apartments", trade: null } },
     [["usr_ua_ana", 1, "sent"]], 15);
   post({ id: "pst_meal_rb", campusId: "riverbend", kind: "meal", ownerId: "usr_rb_lena", title: "Pasta bake for the floor",
     capacity: 6, unitPriceCents: 400, startsAt: t(8), imageUrl: null,
